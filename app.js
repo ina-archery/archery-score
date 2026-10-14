@@ -208,7 +208,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
     h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
-      +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。1本指で上下になぞると、画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。拡大中は、最後に入れた矢（オレンジの丸）を指でなぞると、位置を少し直せます。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
+      +'<p class="note">'+t('的を押すと丸が出ます。そのまま押さえて指を動かすと、丸を動かせます（点数が横に出ます）。指を離した位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。すぐに指を動かすと画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
@@ -235,7 +235,7 @@ function keypad(f,act){
 
 /* ----- 入力 ----- */
 function putArrow(S,a){var c=S.cur,en=S.halves[c.h].ends[c.e],old=en[c.a];
-  a.t=Date.now();a.n=old?old.n:en.filter(Boolean).length+1;en[c.a]=a;ui.lastA=a;vib();
+  a.t=Date.now();a.n=old?old.n:en.filter(Boolean).length+1;en[c.a]=a;vib();
   if(DB.set.sort&&en.every(Boolean))sortEnd(en);
   var n=nextEmpty(S,c.h,c.e,c.a);if(n)S.cur=n;
   save();render()}
@@ -309,16 +309,9 @@ document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&x.da
 document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e.target.open},true);
 
 /* ----- 的タッチ入力（2本指で拡大・タップで入力） ----- */
-var tp={p:{},svg:null,moved:false,pinch:false,moveA:null};
+var tp={p:{},svg:null,moved:false,pinch:false,drag:false,timer:null};
 function markR(g){return g.R*0.034*(g.f.spots>1?1.3:1)}
-function lastInfo(){var S=curS();if(!S||S.type!=='score'||!ui.lastA)return null;var c=S.cur,g=geom(S.halves[c.h]),f=null;
-  S.halves[c.h].ends.forEach(function(en,ei){if(!ui.all&&ei!==c.e)return;en.forEach(function(a){if(a===ui.lastA&&a.px!=null)f={a:a,g:g,cp:g.cps[a.sp||0]||[0,0]}})});return f}
-function placeHit(){var old=document.getElementById('lasthit');
-  var svg=document.getElementById('tg'),L=lastInfo();if(!svg||!L||!zoomed()){if(old)old.remove();return}
-  var v=getView(svg),r=svg.getBoundingClientRect(),wr=svg.parentNode.getBoundingClientRect(),x=L.a.px+L.cp[0],y=L.a.py+L.cp[1];
-  if(x<v[0]||x>v[0]+v[2]||y<v[1]||y>v[1]+v[3]){if(old)old.remove();return}
-  var px=(x-v[0])/v[2]*r.width+(r.left-wr.left),py=(y-v[1])/v[3]*r.height+(r.top-wr.top),rad=Math.max(26,markR(L.g)*1.3/v[2]*r.width),d=old||document.createElement('div');
-  d.id='lasthit';d.style.cssText='position:absolute;touch-action:none;border-radius:50%;left:'+(px-rad)+'px;top:'+(py-rad)+'px;width:'+(rad*2)+'px;height:'+(rad*2)+'px;';if(!old)svg.parentNode.appendChild(d)}
+function placeHit(){var o=document.getElementById('lasthit');if(o)o.remove()}
 function svgPt(ev,svg){var q=svg.createSVGPoint();q.x=ev.clientX;q.y=ev.clientY;var r=q.matrixTransform(svg.getScreenCTM().inverse());return {x:r.x,y:r.y}}
 function currentGeom(){var S=curS();return geom(S.halves[S.cur.h])}
 function spotOf(g,x,y){if(g.cps.length===1)return 0;var bi=0,bd=1e9;g.cps.forEach(function(cp,i){var d=(x-cp[0])*(x-cp[0])+(y-cp[1])*(y-cp[1]);if(d<bd){bd=d;bi=i}});return bi}
@@ -333,32 +326,36 @@ function placeAt(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),r=svg.get
   vib();putArrow(S,{s:sc.s,x:sc.x,px:Math.round(dx*10)/10,py:Math.round(dy*10)/10,sp:sp})}
 function pinchInit(){var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]];
   tp.d0=Math.hypot(a.x-b.x,a.y-b.y)||1;tp.m0={clientX:(a.x+b.x)/2,clientY:(a.y+b.y)/2};tp.v0=getView(tp.svg);tp.q0=svgPt(tp.m0,tp.svg)}
-document.addEventListener('pointerdown',function(ev){var hit=ev.target.closest&&ev.target.closest('#lasthit'),svg=hit?document.getElementById('tg'):(ev.target.closest&&ev.target.closest('#tg'));if(!svg||!curS())return;
-  if(tp.svg!==svg){tp.p={}}tp.svg=svg;tp.moveA=null;tp.p[ev.pointerId]={x:ev.clientX,y:ev.clientY,sx:ev.clientX,sy:ev.clientY};
+var HOLD=170;
+function pvShow(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),sp=spotOf(g,pt.x,pt.y),dx=pt.x-g.cps[sp][0],dy=pt.y-g.cps[sp][1],
+  sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1)),mr=markR(g),c=svg.querySelector('#pvc'),tx=svg.querySelector('#pvt'),ns='http://www.w3.org/2000/svg';
+  if(!c){c=document.createElementNS(ns,'circle');c.id='pvc';c.setAttribute('pointer-events','none');svg.appendChild(c);tx=document.createElementNS(ns,'text');tx.id='pvt';tx.setAttribute('pointer-events','none');svg.appendChild(tx)}
+  c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',mr*0.8);c.setAttribute('fill','#fff');c.setAttribute('fill-opacity','0.4');c.setAttribute('stroke','#e67e00');c.setAttribute('stroke-width',mr*0.3);
+  tx.setAttribute('x',pt.x+mr*1.3);tx.setAttribute('y',pt.y-mr*0.9);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size',mr*1.7);tx.setAttribute('font-weight','bold');tx.setAttribute('fill','#000');tx.setAttribute('stroke','#fff');tx.setAttribute('stroke-width',mr*0.2);tx.setAttribute('paint-order','stroke');
+  tx.textContent=sc.s===0?'M':(sc.x?'X':sc.s)}
+function pvHide(svg){if(!svg)return;var c=svg.querySelector('#pvc'),t=svg.querySelector('#pvt');if(c)c.remove();if(t)t.remove()}
+document.addEventListener('pointerdown',function(ev){var svg=ev.target.closest&&ev.target.closest('#tg');if(!svg||!curS())return;
+  if(tp.svg!==svg){tp.p={}}tp.svg=svg;tp.p[ev.pointerId]={x:ev.clientX,y:ev.clientY,sx:ev.clientX,sy:ev.clientY};
   try{svg.setPointerCapture(ev.pointerId)}catch(e){}
-  var n=Object.keys(tp.p).length;
-  if(n===1){tp.moved=false;tp.pinch=false;tp.v0=getView(svg);
-    if(hit){var L=lastInfo();if(L){var q=svgPt(ev,svg);tp.moveA=L;tp.grab={x:q.x-(L.a.px+L.cp[0]),y:q.y-(L.a.py+L.cp[1])}}}}
-  else{tp.pinch=true;tp.moved=true;tp.moveA=null;pinchInit()}
-  if(ev.pointerType!=='touch')ev.preventDefault()});
+  var n=Object.keys(tp.p).length;clearTimeout(tp.timer);
+  if(n===1){tp.moved=false;tp.pinch=false;tp.drag=false;tp.v0=getView(svg);pvShow(ev,svg);
+    if(ev.pointerType==='touch')tp.timer=setTimeout(function(){if(Object.keys(tp.p).length===1&&!tp.moved){tp.drag=true;vib()}},HOLD);
+    else{tp.drag=true;ev.preventDefault()}}
+  else{tp.pinch=true;tp.moved=true;tp.drag=false;pvHide(svg);pinchInit()}});
 document.addEventListener('pointermove',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;P.x=ev.clientX;P.y=ev.clientY;
   var svg=tp.svg,n=Object.keys(tp.p).length,r=svg.getBoundingClientRect();
-  if(tp.moveA&&n===1){ev.preventDefault();tp.moved=true;var L=tp.moveA,q=svgPt(ev,svg),nx=q.x-tp.grab.x,ny=q.y-tp.grab.y,sp=spotOf(L.g,nx,ny),cp=L.g.cps[sp],S0=curS();
-    L.a.sp=sp;L.a.px=Math.round((nx-cp[0])*10)/10;L.a.py=Math.round((ny-cp[1])*10)/10;L.cp=cp;
-    var sc=scoreAt(L.g.f,L.a.px,L.a.py,(S0.arrowMm||5.5)/20*(+DB.set.cursorX||1));L.a.s=sc.s;L.a.x=sc.x;
-    var m=document.getElementById('lastm'),tx=document.getElementById('lastt');if(m){m.setAttribute('cx',nx);m.setAttribute('cy',ny)}
-    if(tx){tx.setAttribute('x',nx+markR(L.g)*0.62);tx.setAttribute('y',ny-markR(L.g)*0.28)}placeHit();return}
   if(n>=2&&tp.pinch){ev.preventDefault();var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,w=tp.v0[2]/(d/tp.d0),h=w*tp.v0[3]/tp.v0[2];
     setView(svg,[tp.q0.x-(mx-r.left)/r.width*w,tp.q0.y-(my-r.top)/r.height*h,w,h]);return}
-  if(Math.abs(ev.clientX-P.sx)>8||Math.abs(ev.clientY-P.sy)>8)tp.moved=true;
+  if(tp.drag){ev.preventDefault();tp.moved=true;pvShow(ev,svg);return}
+  if(!tp.moved&&(Math.abs(ev.clientX-P.sx)>8||Math.abs(ev.clientY-P.sy)>8)){tp.moved=true;clearTimeout(tp.timer);pvHide(svg)}
   if(tp.moved&&zoomed()&&n===1&&Math.abs(ev.clientX-P.sx)>Math.abs(ev.clientY-P.sy)){ev.preventDefault();var v=tp.v0;setView(svg,[v[0]-(ev.clientX-P.sx)/r.width*v[2],v[1],v[2],v[3]])}},{passive:false});
-document.addEventListener('pointerup',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;
-  var svg=tp.svg,wasLast=Object.keys(tp.p).length===1;delete tp.p[ev.pointerId];
-  if(tp.moveA){var S1=curS(),M=tp.moveA;tp.moveA=null;if(tp.moved){var en=null;S1.halves[S1.cur.h].ends.forEach(function(e){if(e.indexOf(M.a)>=0)en=e});if(en&&DB.set.sort&&en.every(Boolean))sortEnd(en);save();render()}}
-  else if(wasLast&&!tp.moved&&!tp.pinch)placeAt(ev,svg);
+document.addEventListener('touchmove',function(ev){if(tp.drag&&ev.cancelable)ev.preventDefault()},{passive:false});
+document.addEventListener('pointerup',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;clearTimeout(tp.timer);
+  var svg=tp.svg,wasLast=Object.keys(tp.p).length===1,drag=tp.drag;delete tp.p[ev.pointerId];
+  if(wasLast){pvHide(svg);tp.drag=false;if(drag||(!tp.moved&&!tp.pinch))placeAt(ev,svg)}
   if(!Object.keys(tp.p).length){tp.pinch=false}
   else{tp.moved=true;tp.v0=getView(svg);var k=Object.keys(tp.p)[0];tp.p[k].sx=tp.p[k].x;tp.p[k].sy=tp.p[k].y}});
-document.addEventListener('pointercancel',function(ev){if(tp.moveA){tp.moveA=null;save();render()}delete tp.p[ev.pointerId];tp.moved=true;if(!Object.keys(tp.p).length)tp.pinch=false});
+document.addEventListener('pointercancel',function(ev){clearTimeout(tp.timer);delete tp.p[ev.pointerId];tp.moved=true;tp.drag=false;pvHide(tp.svg);if(!Object.keys(tp.p).length)tp.pinch=false});
 document.addEventListener('wheel',function(ev){var svg=ev.target.closest&&ev.target.closest('#tg');if(!svg||!curS())return;ev.preventDefault();
   var v=getView(svg),q=svgPt(ev,svg),r=svg.getBoundingClientRect(),f=ev.deltaY<0?0.8:1.25,w=v[2]*f,h=v[3]*f;
   setView(svg,[q.x-(ev.clientX-r.left)/r.width*w,q.y-(ev.clientY-r.top)/r.height*h,w,h])},{passive:false});
@@ -609,7 +606,7 @@ function renderSet(){var s=DB.set,h='';
    +'<p class="note">'+t('目安: カーボン外径 約5.5〜6.0mm（新しい記録から反映）')+'</p></div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
    +'<label>'+t('ライン判定のゆるさ（タップした位置から、矢の太さ×この倍率の範囲に線があれば高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
-   +'<p class="note">'+t('的は、2本指で拡大・移動してからタップすると細かく狙えます。1本指で上下になぞると画面がスクロールします。拡大してタップすると矢の丸が出ます。オレンジの丸（最後に入れた矢）は、指でなぞって少し動かせます。')+'</p>'
+   +'<p class="note">'+t('的は、2本指で拡大・移動してからタップすると細かく狙えます。すぐに指を動かすと画面がスクロールします。押さえたまま指を動かすと、丸を動かして位置を合わせられます。')+'</p>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
