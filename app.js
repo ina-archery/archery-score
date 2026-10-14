@@ -217,7 +217,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     +'<div class="grid2"><div><label>'+t('天候・風')+'</label><input data-bind="weather" placeholder="'+esc(t('例: 晴れ・右から3m'))+'" value="'+esc(S.weather)+'"></div><div><label>'+t('弓種')+'</label><select data-bind="bow">'+Object.keys(BOWS).map(function(k){return '<option value="'+k+'"'+(S.bow===k?' selected':'')+'>'+t(BOWS[k])+'</option>'}).join('')+'</select></div></div>'
     +gearHTML(S)+'<label>'+t('メモ（調子・反省・セッティング）')+'</label><textarea rows="3" data-bind="memo">'+esc(S.memo)+'</textarea></details>';
   h+='<div class="card"><div class="row">'+(NATIVE?'':'<button data-act="print">'+t('🖨 スコアカード印刷')+'</button>')+'<button data-act="csv">'+t('CSV保存')+'</button><button data-act="copy">'+t('結果をコピー')+'</button><button data-act="share">'+t('共有')+'</button></div>'
-    +'<div class="row"><button data-act="saveRec" class="pri">'+((ui.past||st.done)?t('💾 上書き保存'):t('💾 保存'))+'</button></div>'
+    +'<div class="row"><button data-act="saveRec" class="pri">'+((ui.past||st.done)?t('✅ 上書き保存'):t('✅ 保存'))+'</button></div>'
     +'<div class="row"><button data-act="newDlg">'+t('＋ 新しい記録')+'</button><button data-act="go" data-v="ana">'+t('この記録の分析へ')+'</button></div>'
     +'<p class="note">'+t('入力した内容は自動で保存されています。新しい記録を始めても、今の記録は履歴に残ります。')+'</p></div>';
   el.innerHTML=h}
