@@ -217,7 +217,9 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     +'<div class="grid2"><div><label>'+t('天候・風')+'</label><input data-bind="weather" placeholder="'+esc(t('例: 晴れ・右から3m'))+'" value="'+esc(S.weather)+'"></div><div><label>'+t('弓種')+'</label><select data-bind="bow">'+Object.keys(BOWS).map(function(k){return '<option value="'+k+'"'+(S.bow===k?' selected':'')+'>'+t(BOWS[k])+'</option>'}).join('')+'</select></div></div>'
     +gearHTML(S)+'<label>'+t('メモ（調子・反省・セッティング）')+'</label><textarea rows="3" data-bind="memo">'+esc(S.memo)+'</textarea></details>';
   h+='<div class="card"><div class="row">'+(NATIVE?'':'<button data-act="print">'+t('🖨 スコアカード印刷')+'</button>')+'<button data-act="csv">'+t('CSV保存')+'</button><button data-act="copy">'+t('結果をコピー')+'</button><button data-act="share">'+t('共有')+'</button></div>'
-    +'<div class="row"><button data-act="newDlg" class="pri">'+t('＋ 新しい記録')+'</button><button data-act="go" data-v="ana">'+t('この記録の分析へ')+'</button></div></div>';
+    +'<div class="row"><button data-act="saveRec" class="pri">'+((ui.past||st.done)?t('💾 上書き保存'):t('💾 保存'))+'</button></div>'
+    +'<div class="row"><button data-act="newDlg">'+t('＋ 新しい記録')+'</button><button data-act="go" data-v="ana">'+t('この記録の分析へ')+'</button></div>'
+    +'<p class="note">'+t('入力した内容は自動で保存されています。新しい記録を始めても、今の記録は履歴に残ります。')+'</p></div>';
   el.innerHTML=h}
 var GEAR=[['sight','サイト（数値）','例: 70m 4.52'],['hite','ハイト（ブレースハイト）','例: 23.5cm'],['tiller','ティラー','例: 上13 下10'],['nock','ノッキングポイント','例: +3mm'],['lbs','ポンド','例: 38lbs'],['arrow','矢（長さ・番手）','例: 29.5in 1000'],['other','その他セッティング','例: クリッカー位置']];
 function gearHTML(S){var g=S.gear||{};
@@ -266,12 +268,13 @@ var ACT={
   var rest=en.filter(Boolean).sort(function(a,b){return (a.n||0)-(b.n||0)});rest.forEach(function(a,k){a.n=k+1});
   for(var k=0;k<en.length;k++)en[k]=rest[k]||null;
   S.cur={h:best.h,e:best.e,a:rest.length};save();render()},
- newDlg:function(){openNew()},
+ newDlg:function(){var S=curS();if(S&&S.type==='score'){var st=stat(S);if(st.n>0&&!st.done&&!confirm(t('この記録は途中です（{0}/{1}本）。履歴に残して、新しい記録を始めますか？',st.n,st.cap)))return}openNew()},
  create:function(){createFromDlg()},
  closeDlg:function(){$('#dlg').close()},
  dlgKind:function(b){ui.dlgKind=b.dataset.v;openNew(true)},
  rgrp:function(b){var cur=readDlg()||{};cur.round=b.dataset.v;cur.per=undefined;ui.dlgVals=cur;openNew()},
- open:function(b){DB.cur=b.dataset.id;save();ui.all=false;show('rec')},
+ open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;show('rec')},
+ saveRec:function(){save();flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
  del:function(b){if(confirm(t('この記録を削除しますか？（元に戻せません）'))){DB.sessions=DB.sessions.filter(function(s){return s.id!==b.dataset.id});if(DB.cur===b.dataset.id)DB.cur=null;save();render()}},
  histRound:function(b){ui.histRound=b.dataset.v;render()},
  csv:function(){exportCSV()},
@@ -426,11 +429,12 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
 document.addEventListener('rr',function(){ui.dlgVals=readDlg();openNew()});
 function readDlg(){var g=function(i){var e=$('#'+i);return e?e.value:undefined};
   return {name:g('d_name'),date:g('d_date'),place:g('d_place'),round:g('d_round'),face:g('d_face'),per:(g('d_per')==='m'?(g('d_perm')||'m'):g('d_per')),perm:g('d_perm'),dist:g('d_dist'),arrows:g('d_arrows'),halves:g('d_halves'),bow:g('d_bow'),unit:g('d_unit'),mper:g('d_mper'),sys:g('d_sys'),kind:(g('d_unit')?mkind(g('d_unit'),g('d_sys')):undefined),opp:g('d_opp')}}
+function flash(m){var d=document.createElement('div');d.className='flash';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
 function createFromDlg(){var v=readDlg(),S;
   DB.set.name=v.name||DB.set.name;
   if(ui.dlgKind==='match')S=makeMatch({kind:v.kind||'r-ind',per:v.mper,name:v.name,opp:v.opp,date:v.date||today(),place:v.place});
   else{if(v.bow)DB.set.bow=v.bow;S=makeScore({round:v.round||'70',face:v.face,per:v.per,name:v.name,date:v.date||today(),place:v.place,bow:v.bow||'recurve',free:{dist:v.dist,arrows:v.arrows,halves:v.halves}})}
-  DB.sessions.push(S);DB.cur=S.id;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
+  DB.sessions.push(S);DB.cur=S.id;ui.past=false;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
 
 /* ================= 対戦（マッチ） ================= */
 function mArr(S,c){return c.g==='so'?S.so[c.side]:S.sets[c.s][c.side]}
