@@ -305,7 +305,7 @@ function spotOf(g,x,y){if(g.cps.length===1)return 0;var bi=0,bd=1e9;g.cps.forEac
 function getView(svg){return svg.getAttribute('viewBox').split(' ').map(Number)}
 function baseView(){return currentGeom().vb.slice()}
 function setView(svg,v){var B=baseView(),w=Math.max(B[2]/6,Math.min(B[2],v[2])),h=w*B[3]/B[2],x=Math.max(B[0],Math.min(B[0]+B[2]-w,v[0])),y=Math.max(B[1],Math.min(B[1]+B[3]-h,v[1]));
-  v=[x,y,w,h];svg.setAttribute('viewBox',v.join(' '));ui.tgView=v;ui.tgKey=B.join(' ');svg.style.touchAction=(w<B[2]-0.01)?'none':'pan-y'}
+  v=[x,y,w,h];svg.setAttribute('viewBox',v.join(' '));ui.tgView=v;ui.tgKey=B.join(' ');svg.style.touchAction=(w<B[2]-0.01)?'none':'pan-y';var zb=document.querySelector('[data-act=zoomReset]');if(zb)zb.disabled=!(w<B[2]-0.01)}
 function zoomed(){var g=currentGeom();return !!(ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)}
 function placeAt(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),r=svg.getBoundingClientRect();
   if(!(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom))return;
