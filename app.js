@@ -208,7 +208,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button></div>';
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
-    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:'+((ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)?'none':'pan-y')+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g><g id="prev" visibility="hidden"><circle r="'+(g.R*0.05)+'" fill="none" stroke="#e67e00" stroke-width="'+(g.R*0.012)+'"/></g></svg></div>'+tb
+    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:'+((ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)?'none':'pan-y')+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
       +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大して、拡大したままタップできます。拡大中は1本指で動かせます。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
@@ -248,7 +248,7 @@ function keyIn(v){var S=curS();if(!S)return;var a;
 var ACT={
  nav:function(b){show(b.dataset.v)},
  go:function(b){show(b.dataset.v)},
- tab:function(b){var S=curS(),h=+b.dataset.v,n=nextEmpty(S,h,0,0);S.cur=(n&&n.h===h)?n:{h:h,e:0,a:0};save();render()},
+ tab:function(b){var S=curS(),h=+b.dataset.v,n=nextEmpty(S,h,0,0);S.cur=(n&&n.h===h)?n:{h:h,e:0,a:0};ui.tgView=null;save();render()},
  mode:function(b){ui.mode=b.dataset.v;DB.set.mode=ui.mode;save();render()},
  key:function(b){keyIn(b.dataset.v)},
  miss:function(){keyIn('M')},
@@ -277,7 +277,7 @@ var ACT={
  closeDlg:function(){$('#dlg').close()},
  dlgKind:function(b){ui.dlgKind=b.dataset.v;openNew(true)},
  rgrp:function(b){var cur=readDlg()||{};cur.round=b.dataset.v;cur.per=undefined;ui.dlgVals=cur;openNew()},
- open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;show('rec')},
+ open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;ui.tgView=null;show('rec')},
  saveRec:function(){save();flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
  del:function(b){if(confirm(t('この記録を削除しますか？（元に戻せません）'))){DB.sessions=DB.sessions.filter(function(s){return s.id!==b.dataset.id});if(DB.cur===b.dataset.id)DB.cur=null;save();render()}},
  histRound:function(b){ui.histRound=b.dataset.v;render()},
@@ -461,7 +461,7 @@ function createFromDlg(){var v=readDlg(),S;
   DB.set.name=v.name||DB.set.name;
   if(ui.dlgKind==='match')S=makeMatch({kind:v.kind||'r-ind',per:v.mper,name:v.name,opp:v.opp,date:v.date||today(),place:v.place});
   else{if(v.bow)DB.set.bow=v.bow;S=makeScore({round:v.round||'70',face:v.face,per:v.per,name:v.name,date:v.date||today(),place:v.place,bow:v.bow||'recurve',free:{dist:v.dist,arrows:v.arrows,halves:v.halves}})}
-  DB.sessions.push(S);DB.cur=S.id;ui.past=false;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
+  DB.sessions.push(S);DB.cur=S.id;ui.past=false;ui.tgView=null;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
 
 /* ================= 対戦（マッチ） ================= */
 function mArr(S,c){return c.g==='so'?S.so[c.side]:S.sets[c.s][c.side]}
@@ -527,6 +527,9 @@ function summaryText(S){if(!S)return '';
   var st=stat(S),x='🎯 '+(S.name||'')+' '+S.date+' '+rl(S)+'\n'+(S.place?S.place+'\n':'');
   S.halves.forEach(function(h,i){var q=st.half[i];x+=(S.halves.length>1?t('{0}回目 ',i+1):'')+h.d+': '+t('{0}点',q.sum)+' ('+tens(st,q)+')\n'});
   x+=t('合計')+' '+st.total+' / '+st.max+'　'+t('平均')+' '+f2(st.avg)+'/'+t('矢')+'\n'+(st.indoor?t('10の数')+' '+st.tens+'　'+t('9の数')+' '+st.nines:t('10+Xの数')+' '+st.tens+'　'+t('Xの数')+' '+st.xs);
+  if(S.goal)x+='\n'+t('目標 {0}点',S.goal);
+  var gl=GEAR.filter(function(f){return S.gear&&S.gear[f[0]]}).map(function(f){return t(f[1]).replace(/（.*?）/,'')+' '+S.gear[f[0]]});if(gl.length)x+='\n⚙ '+gl.join(' / ');
+  var al=[];S.halves.forEach(function(h,hi){h.ends.forEach(function(en,ei){en.forEach(function(a){if(a&&(a.c||a.tag)){var g=TAGS.filter(function(z){return z[0]===a.tag})[0];al.push((hi*h.ends.length+ei+1)+t('立ち')+' '+lab(a)+(g?' '+g[1]:'')+(a.c?' '+a.c:''))}})})});if(al.length)x+='\n'+t('矢ごとのメモ')+'\n'+al.join('\n');
   if(S.weather)x+='\n'+t('天候')+': '+S.weather;if(S.memo)x+='\n'+t('メモ')+': '+S.memo;return x}
 function copyText(tx,b){function ok(){if(b){var o=b.textContent;b.textContent=t('コピーしました');setTimeout(function(){b.textContent=o},1500)}else alert(t('コピーしました'))}
   function fb(){var a=document.createElement('textarea');a.value=tx;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){prompt(t('コピーしてください'),tx)}document.body.removeChild(a)}
@@ -538,8 +541,9 @@ function saveFile(name,text,type){
       .then(function(r){return plug('Share').share({title:name,url:r.uri})}).catch(function(){alert(t('保存できませんでした'))});return}
   var b=new Blob(['﻿'+text],{type:type+';charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a)},500)}
 function exportCSV(){var S=curS();if(!S||S.type!=='score')return;
-  var rows=[[t('氏名'),S.name,t('日付'),S.date,t('ラウンド'),rl(S),t('大会名・場所'),S.place],[t('回'),t('距離'),t('標的面'),t('エンド'),t('本'),t('点'),'X','x(cm)','y(cm)',t('的番号')]];
-  S.halves.forEach(function(h,hi){h.ends.forEach(function(en,ei){en.forEach(function(a,ai){if(a)rows.push([hi+1,h.d,t(FACES[h.f].l),ei+1,ai+1,a.s,a.x?'X':'',a.px==null?'':a.px,a.py==null?'':a.py,a.sp==null?'':a.sp+1])})})});
+  var rows=[[t('氏名'),S.name,t('日付'),S.date,t('ラウンド'),rl(S),t('大会名・場所'),S.place],[t('回'),t('距離'),t('標的面'),t('エンド'),t('本'),t('点'),'X','x(cm)','y(cm)',t('的番号'),t('印'),t('コメント')]];
+  var gr=GEAR.filter(function(f){return S.gear&&S.gear[f[0]]});if(gr.length)rows.splice(1,0,[t('弓具セッティング')].concat([].concat.apply([],gr.map(function(f){return [t(f[1]),S.gear[f[0]]]}))));
+  S.halves.forEach(function(h,hi){h.ends.forEach(function(en,ei){en.forEach(function(a,ai){if(a)rows.push([hi+1,h.d,t(FACES[h.f].l),ei+1,ai+1,a.s,a.x?'X':'',a.px==null?'':a.px,a.py==null?'':a.py,a.sp==null?'':a.sp+1,a.tag||'',a.c||''])})})});
   var st=stat(S);rows.push([t('合計'),st.total,'/',st.max,'10+X',st.tens,'X',st.xs]);
   saveFile('score_'+S.date+'_'+(S.name||'')+'.csv',rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\r\n'),'text/csv')}
 function buildPrint(S){if(!S)return;var el=$('#printArea'),h;
