@@ -627,12 +627,17 @@ var wl=null;function wake(){try{if(DB.set.wake&&navigator.wakeLock){navigator.wa
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wake()});
 wake();
 // Offline support (installed web version only): cache the app on first visit, tell the user when a new version arrives
+var T0=Date.now();
 if('serviceWorker' in navigator&&!NATIVE&&/^https?:$/.test(location.protocol)){
   var hadCtrl=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').catch(function(){});
   navigator.serviceWorker.addEventListener('controllerchange',function(){
     if(!hadCtrl){hadCtrl=true;return}
-    var d=document.createElement('div');d.id='toast';d.textContent=t('新しい版になりました。タッチして更新');d.onclick=function(){location.reload()};document.body.appendChild(d)});
+    if(Date.now()-T0<8000){location.reload();return}
+    ui.upd=true;var d=document.createElement('div');d.id='toast';d.textContent=t('新しい版になりました。タッチして更新');d.onclick=function(){location.reload()};document.body.appendChild(d)});
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible')return;
+    if(ui.upd){location.reload();return}
+    navigator.serviceWorker.getRegistration().then(function(r){if(r)r.update()}).catch(function(){})});
 }
 if(!DB.cur&&DB.sessions.length)DB.cur=DB.sessions[DB.sessions.length-1].id;
 show('rec');
