@@ -208,7 +208,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
     h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
-      +'<p class="note">'+t('的を押すと丸が出ます。そのまま押さえて指を動かすと、丸を動かせます（点数が横に出ます）。指を離した位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。すぐに指を動かすと画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
+      +'<p class="note">'+t('的を押すと丸が出ます。そのまま押さえて指を動かすと、丸を動かせます（点数が真上に出ます）。指を離した位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。すぐに指を動かすと画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
@@ -331,7 +331,8 @@ function pvShow(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),sp=spotOf(
   sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1)),mr=markR(g),c=svg.querySelector('#pvc'),tx=svg.querySelector('#pvt'),ns='http://www.w3.org/2000/svg';
   if(!c){c=document.createElementNS(ns,'circle');c.id='pvc';c.setAttribute('pointer-events','none');svg.appendChild(c);tx=document.createElementNS(ns,'text');tx.id='pvt';tx.setAttribute('pointer-events','none');svg.appendChild(tx)}
   c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',mr*0.8);c.setAttribute('fill','#fff');c.setAttribute('fill-opacity','0.4');c.setAttribute('stroke','#e67e00');c.setAttribute('stroke-width',mr*0.3);
-  tx.setAttribute('x',pt.x+mr*1.3);tx.setAttribute('y',pt.y-mr*0.9);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size',mr*1.7);tx.setAttribute('font-weight','bold');tx.setAttribute('fill','#000');tx.setAttribute('stroke','#fff');tx.setAttribute('stroke-width',mr*0.2);tx.setAttribute('paint-order','stroke');
+  var v=getView(svg),rc=svg.getBoundingClientRect(),k=v[2]/rc.width,off=70*k,fs=30*k,ty=pt.y-off;if(ty-fs<v[1])ty=pt.y+off+fs;
+  tx.setAttribute('x',pt.x);tx.setAttribute('y',ty);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size',fs);tx.setAttribute('font-weight','bold');tx.setAttribute('fill','#000');tx.setAttribute('stroke','#fff');tx.setAttribute('stroke-width',fs*0.18);tx.setAttribute('paint-order','stroke');
   tx.textContent=sc.s===0?'M':(sc.x?'X':sc.s)}
 function pvHide(svg){if(!svg)return;var c=svg.querySelector('#pvc'),t=svg.querySelector('#pvt');if(c)c.remove();if(t)t.remove()}
 document.addEventListener('pointerdown',function(ev){var svg=ev.target.closest&&ev.target.closest('#tg');if(!svg||!curS())return;
