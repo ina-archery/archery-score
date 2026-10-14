@@ -252,6 +252,7 @@ var ACT={
  goal:function(){var S=curS();if(!S)return;var v=prompt(t('目標点数を入力（空で解除）'),S.goal||'');if(v===null)return;S.goal=Math.max(0,Math.min(maxArrows(S)*10,Math.round(+v)||0));save();render()},
  calAdd:function(){var d=prompt(t('日付（例 2026-11-03）'),today());if(!d)return;if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.trim())){alert(t('日付は 2026-11-03 の形で入力してください'));return}var p=d.trim().split('-');d=p[0]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[2]).slice(-2);var ti=prompt(t('予定の名前（例 新人戦）'),'');if(!ti)return;DB.events.push({id:uid(),date:d,title:ti,kind:'試合'});save();render()},
  calDel:function(b){if(confirm(t('この予定を削除しますか？'))){DB.events=DB.events.filter(function(e){return e.id!==b.dataset.id});save();render()}},
+ calDay:function(b){ui.calSel=b.dataset.v;render()},
  calMonth:function(b){ui.calM=(ui.calM||0)+(+b.dataset.v);render()},
  zoomReset:function(){ui.tgView=null;render()},
  viewAll:function(){ui.all=!ui.all;render()},
@@ -337,9 +338,10 @@ document.addEventListener('wheel',function(ev){var svg=ev.target.closest&&ev.tar
   setView(svg,[q.x-(ev.clientX-r.left)/r.width*w,q.y-(ev.clientY-r.top)/r.height*h,w,h])},{passive:false});
 
 /* ================= 履歴 ================= */
+function evTag(d){var e=DB.events.filter(function(x){return x.date===d}).map(function(x){return x.title});return e.length?' 📅'+esc(e.join('・')):''}
 function listItem(s){var sub,title;
   if(s.type==='match'){var M=mState(s);title=t('対戦 vs {0}',esc(oppName(s)))+'　<small>'+esc(M.label)+'</small>';sub=esc(s.date)+' ・ '+esc(mname(s))+' ・ '+esc(s.place)}
-  else{var st=stat(s);title=st.total+'<small> / '+st.max+'</small>　'+t('平均')+' '+f2(st.avg);sub=esc(s.date)+' ・ '+esc(rlShort(s))+' ・ '+esc(s.place)+(st.done?'':' ・ '+t('入力中')+' '+st.n+'/'+st.cap)}
+  else{var st=stat(s);title=st.total+'<small> / '+st.max+'</small>　'+t('平均')+' '+f2(st.avg);sub=esc(s.date)+evTag(s.date)+' ・ '+esc(rlShort(s))+' ・ '+esc(s.place)+(st.done?'':' ・ '+t('入力中')+' '+st.n+'/'+st.cap)}
   return '<div class="li"><div class="m" data-act="open" data-id="'+s.id+'"><b>'+title+'</b><div>'+sub+'</div></div><button data-act="del" data-id="'+s.id+'" class="warn">'+t('削除')+'</button></div>'}
 function renderHist(){var el=$('#v-hist'),list=DB.sessions.slice().sort(function(a,b){return (b.date<a.date?-1:b.date>a.date?1:b.created-a.created)});
   var rounds={};DB.sessions.forEach(function(s){if(s.type==='score')rounds[s.round]=rlShort(s)});
@@ -533,8 +535,14 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
   h+='<table class="cal"><thead><tr>'+['日','月','火','水','木','金','土'].map(function(w){return '<th>'+t(w)+'</th>'}).join('')+'</tr></thead><tbody>';
   var first=m.getDay(),days=new Date(y,mo+1,0).getDate(),td=today();
   for(var r=0;r<6;r++){if(r*7-first+1>days)break;h+='<tr>';for(var c=0;c<7;c++){var dn=r*7+c-first+1;if(dn<1||dn>days){h+='<td></td>';continue}
-    var ds=y+'-'+pd(mo+1)+'-'+pd(dn);h+='<td class="'+(ds===td?'today':'')+'"><div>'+dn+'</div>'+(ev[ds]?'<i class="ev">●</i>':'')+(sc[ds]?'<i class="sc">●</i>':'')+'</td>'}h+='</tr>'}
+    var ds=y+'-'+pd(mo+1)+'-'+pd(dn);h+='<td class="'+(ds===td?'today':'')+(ds===ui.calSel?' selday':'')+'" data-act="calDay" data-v="'+ds+'"><div>'+dn+'</div>'+(ev[ds]?'<i class="ev">●</i>':'')+(sc[ds]?'<i class="sc">●</i>':'')+'</td>'}h+='</tr>'}
   h+='</tbody></table><p class="note"><i class="ev">●</i> '+t('予定')+'　<i class="sc">●</i> '+t('記録した日')+'</p><div class="row"><button class="pri" data-act="calAdd">'+t('＋ 予定を追加')+'</button></div></div>';
+  var sel=ui.calSel||td,dEv=DB.events.filter(function(e){return e.date===sel}),dS=DB.sessions.filter(function(x){return x.date===sel}).sort(function(a,b){return a.created-b.created});
+  h+='<div class="card"><h2>'+esc(sel)+'</h2>';
+  if(!dEv.length&&!dS.length)h+='<p class="note" style="margin:0">'+t('この日の予定・記録はありません。')+'</p>';
+  dEv.forEach(function(e){h+='<div class="li"><div class="m"><b>📅 '+esc(e.title)+'</b></div><button data-act="calDel" data-id="'+e.id+'" class="warn">'+t('削除')+'</button></div>'});
+  dS.forEach(function(x){h+=listItem(x)});
+  h+='</div>';
   var all=DB.events.slice().sort(function(a,b){return a.date<b.date?-1:1});
   if(all.length)h+='<div class="card"><h2>'+t('予定一覧')+'</h2>'+all.map(function(e){var d=dayDiff(e.date);return '<div class="li"><div class="m"><b>'+esc(e.title)+'</b><div>'+esc(e.date)+' ・ '+(d>0?t('あと{0}日',d):d===0?t('今日'):t('終了'))+'</div></div><button data-act="calDel" data-id="'+e.id+'" class="warn">'+t('削除')+'</button></div>'}).join('')+'</div>';
   el.innerHTML=h}
