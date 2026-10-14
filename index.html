@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>Archery Score</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Archery">
+<style>
+:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--accent2:#1d6fd8;--sel:#e67e00;--warn:#c0392b;--soft:#e8efeb}
+@media (prefers-color-scheme:dark){:root{--bg:#101412;--card:#1a201d;--text:#e8eeea;--sub:#9aa8a1;--line:#2f3a35;--accent:#4cc27e;--accent2:#5aa2f5;--soft:#242d29}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 "Meiryo","Yu Gothic UI","Hiragino Sans",sans-serif;padding:0 10px 84px}
+header{max-width:680px;margin:0 auto;padding:10px 2px 4px}
+header h1{font-size:1.05rem;margin:0}
+header small{color:var(--sub)}
+main{max-width:680px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:0 0 10px}
+h2{font-size:1rem;margin:0 0 6px}
+button,select,input,textarea{font:inherit;color:var(--text)}
+button{cursor:pointer;border:1px solid var(--accent);background:var(--card);color:var(--accent);border-radius:9px;padding:.5em .7em;touch-action:manipulation;min-height:42px}
+button.on{background:var(--accent);color:#fff}
+button.pri{background:var(--accent);color:#fff;font-weight:bold}
+button.warn{border-color:var(--warn);color:var(--warn)}
+button:disabled{opacity:.35}
+input,select,textarea{width:100%;padding:.4em .5em;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+label{display:block;font-size:.8rem;color:var(--sub);margin:6px 0 2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.row>*{flex:1;min-width:6.2em}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.sum div{background:var(--soft);border-radius:9px;padding:4px 2px}
+.sum small{display:block;color:var(--sub);font-size:.7rem}
+.sum b{font-size:1.15rem}
+.sum .grand{grid-column:1/5;background:var(--accent);color:#fff;display:flex;align-items:baseline;justify-content:center;gap:8px}
+.sum .grand b{font-size:2rem}
+.sum .grand small{display:inline;color:#dff;font-size:.85rem}
+.tabs{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto}
+.tabs button{flex:1;min-width:6em;white-space:nowrap}
+.now{font-weight:bold;margin:2px 0 6px}
+.now span{color:var(--sub);font-weight:normal;font-size:.82rem}
+.tgwrap{position:relative;text-align:center}
+svg#tg{width:100%;max-width:520px;max-height:76vh;height:auto;display:block;margin:0 auto;touch-action:pan-y;-webkit-touch-callout:none;background:#dfe4e1;border-radius:10px;user-select:none;-webkit-user-select:none}
+#loupe{position:fixed;z-index:50;width:210px;height:210px;border-radius:50%;border:4px solid var(--sel);background:#fff;overflow:hidden;box-shadow:0 4px 14px #0007;pointer-events:none;display:none}
+#loupe svg{width:100%;height:100%;display:block}
+#lval{position:fixed;z-index:51;min-width:62px;text-align:center;padding:2px 10px;border-radius:12px;background:#000c;color:#fff;font-size:1.6rem;font-weight:bold;pointer-events:none;display:none}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pad button{min-height:54px;font-size:1.35rem;font-weight:bold;border:2px solid #0004}
+.k0{background:#8a8f8c;color:#fff}.k1,.k2{background:#fafafa;color:#222}.k3,.k4{background:#2b2b2b;color:#fff}.k5,.k6{background:#2a8be0;color:#fff}.k7,.k8{background:#e0342b;color:#fff}.k9,.k10{background:#f7d117;color:#222}.kX{background:#f7d117;color:#222;box-shadow:inset 0 0 0 3px #e0342b}
+.pad button:disabled{opacity:.18}
+table{border-collapse:collapse;width:100%;table-layout:fixed;text-align:center;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:0;height:2.5em}
+th{background:var(--soft);font-size:.74rem;color:var(--sub);font-weight:normal}
+td.c{cursor:pointer;font-weight:bold;font-size:1.05rem}
+td.c.sel{outline:3px solid var(--sel);outline-offset:-3px}
+td.s1,td.s2{background:#fafafa;color:#222}td.s3,td.s4{background:#2b2b2b;color:#fff}td.s5,td.s6{background:#2a8be0;color:#fff}td.s7,td.s8{background:#e0342b;color:#fff}td.s9,td.s10{background:#f7d117;color:#222}td.s0{background:#8a8f8c;color:#fff}
+table.many td.c{font-size:.8rem}table.many th{font-size:.62rem}
+td.tot{font-weight:bold}
+tfoot td,tfoot th{background:var(--soft);font-weight:bold}
+.note{color:var(--sub);font-size:.8rem;margin:.4em 0 0}
+.li{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
+.li .m{flex:1;min-width:0;cursor:pointer}
+.li .m b{font-size:1.05rem}
+.li .m div{color:var(--sub);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li button{min-height:36px;padding:.2em .6em;flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chips button{min-height:36px;padding:.2em .7em}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:20}
+nav button i{font-style:normal}
+nav button{flex:1;border:0;border-radius:0;background:transparent;color:var(--sub);min-height:56px;font-size:.78rem;line-height:1.2}
+nav button.on{color:var(--accent);font-weight:bold;background:var(--soft)}
+nav button span{display:block;font-size:1.3rem}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);width:min(94vw,520px);padding:14px}
+dialog::backdrop{background:#0008}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-top:8px}
+.stat div{background:var(--soft);border-radius:9px;padding:4px}
+.stat small{display:block;color:var(--sub);font-size:.7rem}
+.stat b{font-size:1.1rem}
+.ana svg{width:100%;height:auto;display:block;background:var(--soft);border-radius:10px}
+.bar{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:.85rem}
+.bar i{display:block;height:16px;border-radius:4px;background:var(--accent)}
+.bar span{width:3.2em;text-align:right;color:var(--sub)}
+.so{border:2px solid var(--sel);border-radius:8px;padding:6px;margin-top:8px}
+.vs{display:flex;align-items:center;gap:6px;padding:8px 4px}.vs .sd{flex:1;text-align:center;min-width:0;word-break:break-all;font-size:1.05rem;border:2px solid transparent;border-radius:10px;padding:6px 2px}.vs .sd.win{border-color:#1a8f4c;background:rgba(26,143,76,.12)}.vs .sc{font-size:2rem;white-space:nowrap}.badge{display:block;margin:0 auto 4px;font-size:.8rem;font-weight:bold;letter-spacing:.05em;padding:1px 10px;border-radius:10px;width:fit-content}.badge.w{background:#1a8f4c;color:#fff}.badge.l{background:#8a8f8c;color:#fff}
+.res{font-size:1.3rem;font-weight:bold;text-align:center;padding:6px;border-radius:9px;background:var(--soft);margin-bottom:8px}
+#printArea{display:none}
+#toast{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:#14532d;color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;cursor:pointer}
+@media print{
+  body{padding:0;background:#fff;color:#000}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block;font-size:11pt}
+  #printArea table{width:100%;margin:6px 0}
+  #printArea th,#printArea td{border:1px solid #000;height:1.9em;color:#000;background:#fff}
+  .sig{display:flex;gap:20px;margin-top:22px}.sig div{flex:1;border-bottom:1px solid #000;padding-top:14px}
+}
+</style>
+</head>
+<body>
+<header><h1>🎯 <span data-i18n="アーチェリー スコア記録"></span></h1><small id="sub"></small></header>
+<main>
+  <section id="v-rec" class="view on"></section>
+  <section id="v-hist" class="view"></section>
+  <section id="v-ana" class="view ana"></section>
+  <section id="v-set" class="view"></section>
+</main>
+<nav>
+  <button data-act="nav" data-v="rec" id="n-rec"><span>🎯</span><i data-i18n="記録"></i></button>
+  <button data-act="nav" data-v="hist" id="n-hist"><span>📋</span><i data-i18n="履歴"></i></button>
+  <button data-act="nav" data-v="ana" id="n-ana"><span>📈</span><i data-i18n="分析"></i></button>
+  <button data-act="nav" data-v="set" id="n-set"><span>⚙️</span><i data-i18n="設定"></i></button>
+</nav>
+<dialog id="dlg"></dialog>
+<div id="printArea"></div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
