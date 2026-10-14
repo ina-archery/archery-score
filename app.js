@@ -208,8 +208,8 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button></div>';
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
-    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:'+((ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)?'none':'pan-y')+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
-      +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大して、拡大したままタップできます。拡大中は1本指で動かせます。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
+    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
+      +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。1本指で上下になぞると、画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
@@ -317,7 +317,7 @@ function spotOf(g,x,y){if(g.cps.length===1)return 0;var bi=0,bd=1e9;g.cps.forEac
 function getView(svg){return svg.getAttribute('viewBox').split(' ').map(Number)}
 function baseView(){return currentGeom().vb.slice()}
 function setView(svg,v){var B=baseView(),w=Math.max(B[2]/6,Math.min(B[2],v[2])),h=w*B[3]/B[2],x=Math.max(B[0],Math.min(B[0]+B[2]-w,v[0])),y=Math.max(B[1],Math.min(B[1]+B[3]-h,v[1]));
-  v=[x,y,w,h];svg.setAttribute('viewBox',v.join(' '));ui.tgView=v;ui.tgKey=B.join(' ');svg.style.touchAction=(w<B[2]-0.01)?'none':'pan-y';var zb=document.querySelector('[data-act=zoomReset]');if(zb)zb.disabled=!(w<B[2]-0.01)}
+  v=[x,y,w,h];svg.setAttribute('viewBox',v.join(' '));ui.tgView=v;ui.tgKey=B.join(' ');var zb=document.querySelector('[data-act=zoomReset]');if(zb)zb.disabled=!(w<B[2]-0.01)}
 function zoomed(){var g=currentGeom();return !!(ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)}
 function placeAt(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),r=svg.getBoundingClientRect();
   if(!(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom))return;
@@ -337,7 +337,7 @@ document.addEventListener('pointermove',function(ev){var P=tp.p[ev.pointerId];if
   if(n>=2&&tp.pinch){ev.preventDefault();var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,w=tp.v0[2]/(d/tp.d0),h=w*tp.v0[3]/tp.v0[2];
     setView(svg,[tp.q0.x-(mx-r.left)/r.width*w,tp.q0.y-(my-r.top)/r.height*h,w,h]);return}
   if(Math.abs(ev.clientX-P.sx)>8||Math.abs(ev.clientY-P.sy)>8)tp.moved=true;
-  if(tp.moved&&zoomed()&&n===1){ev.preventDefault();var v=tp.v0;setView(svg,[v[0]-(ev.clientX-P.sx)/r.width*v[2],v[1]-(ev.clientY-P.sy)/r.height*v[3],v[2],v[3]])}},{passive:false});
+  if(tp.moved&&zoomed()&&n===1&&Math.abs(ev.clientX-P.sx)>Math.abs(ev.clientY-P.sy)){ev.preventDefault();var v=tp.v0;setView(svg,[v[0]-(ev.clientX-P.sx)/r.width*v[2],v[1],v[2],v[3]])}},{passive:false});
 document.addEventListener('pointerup',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;
   var svg=tp.svg,wasLast=Object.keys(tp.p).length===1;delete tp.p[ev.pointerId];
   if(wasLast&&!tp.moved&&!tp.pinch)placeAt(ev,svg);
@@ -594,7 +594,7 @@ function renderSet(){var s=DB.set,h='';
    +'<p class="note">'+t('目安: カーボン外径 約5.5〜6.0mm（新しい記録から反映）')+'</p></div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
    +'<label>'+t('ライン判定のゆるさ（タップした位置から、矢の太さ×この倍率の範囲に線があれば高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
-   +'<p class="note">'+t('的は、2本指で拡大してからタップすると細かく狙えます。拡大中は1本指で動かせます。拡大すると、入れた矢に矢の太さの赤い輪が出るので、線に触れているか確認できます。')+'</p>'
+   +'<p class="note">'+t('的は、2本指で拡大・移動してからタップすると細かく狙えます。1本指で上下になぞると画面がスクロールします。拡大すると、入れた矢に矢の太さの赤い輪が出るので、線に触れているか確認できます。')+'</p>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
