@@ -414,10 +414,10 @@ function arrowPanel(all){var sel=null;all.forEach(function(p){if(p.a===ui.anaSel
   var h='<div class="card"><h2>'+t('矢ごとのメモ')+'</h2>';
   if(!sel)h+='<p class="note" style="margin:0">'+t('着弾マップの矢をタップすると、その矢に「良い／ミス／気になる」の印とコメントを残せます。')+'</p>';
   else{var a=sel.a;
-    h+='<div class="now" style="margin:0 0 6px">'+sel.e+t('立ち目')+' <span>'+(DB.set.arrowNo?sel.n+t('番')+' ・ ':'')+lab(a)+t('点')+'</span></div><div class="chips">'+TAGS.map(function(g){return '<button class="'+(a.tag===g[0]?'on':'')+'" data-act="arrTag" data-v="'+g[0]+'">'+t(g[1])+'</button>'}).join('')+'</div>'
+    h+='<div class="now" style="margin:0 0 6px">'+sel.e+t('立ち目')+' <span>'+(DB.set.arrowNo?sel.n+t('射目')+' ・ ':'')+lab(a)+t('点')+'</span></div><div class="chips">'+TAGS.map(function(g){return '<button class="'+(a.tag===g[0]?'on':'')+'" data-act="arrTag" data-v="'+g[0]+'">'+t(g[1])+'</button>'}).join('')+'</div>'
      +'<textarea rows="2" data-arrc="1" placeholder="'+esc(t('例: リリースで引っかかった／風で流された'))+'">'+esc(a.c||'')+'</textarea>'}
   var memo=all.filter(function(p){return p.a.c||p.a.tag});
-  if(memo.length)h+='<div style="margin-top:8px">'+memo.map(function(p){var g=TAGS.filter(function(x){return x[0]===p.a.tag})[0];return '<div class="note" style="margin:2px 0;cursor:pointer" data-act="arrPick" data-n="'+p.n+'"><b>'+p.e+t('立ち')+(DB.set.arrowNo?' '+p.n+t('番'):'')+'</b> '+lab(p.a)+(g?' '+t(g[1]):'')+(p.a.c?' ： '+esc(p.a.c):'')+'</div>'}).join('')+'</div>';
+  if(memo.length)h+='<div style="margin-top:8px">'+memo.map(function(p){var g=TAGS.filter(function(x){return x[0]===p.a.tag})[0];return '<div class="note" style="margin:2px 0;cursor:pointer" data-act="arrPick" data-n="'+p.n+'"><b>'+p.e+t('立ち')+(DB.set.arrowNo?' '+p.n+t('射目'):'')+'</b> '+lab(p.a)+(g?' '+t(g[1]):'')+(p.a.c?' ： '+esc(p.a.c):'')+'</div>'}).join('')+'</div>';
   return h+'</div>'}
 function bindAna(){var r=$('#aR'),d=$('#aD');if(r)r.onchange=function(){ui.anaRound=this.value;render()};if(d)d.onchange=function(){ui.anaDist=this.value;render()}}
 function lineChart(data){var W=320,Hh=150,P=26,mn=Math.min.apply(null,data.map(function(d){return d.v})),mxv=Math.max.apply(null,data.map(function(d){return d.v}));
@@ -588,7 +588,7 @@ function renderSet(){var s=DB.set,h='';
    +'<label>'+t('カーソルの〇の大きさ（この〇が線に触れたら高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('実寸（矢の太さ）')],[2,t('矢の2倍')],[3,t('矢の3倍')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
    +'<label>'+t('拡大ルーペの倍率（〇が矢の太さ。〇が線に触れたら高い方の得点）')+'</label><select data-set="zoom">'+[[1.5,t('標準')],[2.5,t('大')],[4,t('特大')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.zoom===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
-   +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何本目）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
+   +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="wake" '+(s.wake?'checked':'')+'> '+t('記録中は画面を消さない（対応ブラウザ）')+'</label></div>';
   h+='<div class="card"><h2>'+t('データ')+'</h2><p class="note">'+t('記録はこの端末に保存されます。機種変更・データ削除に備え、ときどきバックアップを保存してください。')+'</p>'
