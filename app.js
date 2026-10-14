@@ -331,7 +331,7 @@ function pvShow(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),sp=spotOf(
   sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1)),mr=markR(g),c=svg.querySelector('#pvc'),tx=svg.querySelector('#pvt'),ns='http://www.w3.org/2000/svg';
   if(!c){c=document.createElementNS(ns,'circle');c.id='pvc';c.setAttribute('pointer-events','none');svg.appendChild(c);tx=document.createElementNS(ns,'text');tx.id='pvt';tx.setAttribute('pointer-events','none');svg.appendChild(tx)}
   c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',mr*0.8);c.setAttribute('fill','#fff');c.setAttribute('fill-opacity','0.4');c.setAttribute('stroke','#e67e00');c.setAttribute('stroke-width',mr*0.3);
-  var v=getView(svg),rc=svg.getBoundingClientRect(),k=v[2]/rc.width,off=70*k,fs=30*k,ty=pt.y-off;if(ty-fs<v[1])ty=pt.y+off+fs;
+  var v=getView(svg),rc=svg.getBoundingClientRect(),k=v[2]/rc.width,off=48*k,fs=30*k,ty=pt.y-off;if(ty-fs<v[1])ty=pt.y+off+fs;
   tx.setAttribute('x',pt.x);tx.setAttribute('y',ty);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size',fs);tx.setAttribute('font-weight','bold');tx.setAttribute('fill','#000');tx.setAttribute('stroke','#fff');tx.setAttribute('stroke-width',fs*0.18);tx.setAttribute('paint-order','stroke');
   tx.textContent=sc.s===0?'M':(sc.x?'X':sc.s)}
 function pvHide(svg){if(!svg)return;var c=svg.querySelector('#pvc'),t=svg.querySelector('#pvt');if(c)c.remove();if(t)t.remove()}
