@@ -167,7 +167,7 @@ function arrowMarks(S,h,g,cur){var s='',mr=g.R*0.034*(g.f.spots>1?1.3:1);
     if(!ui.all&&ei!==cur.e)return;var isCur=(ei===cur.e);
     en.forEach(function(a,ai){if(!a||a.px==null)return;var cp=g.cps[a.sp||0]||[0,0],x=a.px+cp[0],y=a.py+cp[1],sel=isCur&&cur.a===ai,lst=(a===ui.lastA);
       s+='<circle'+(lst?' id="lastm"':'')+' cx="'+x+'" cy="'+y+'" r="'+(isCur?mr*0.8:mr*0.62)+'" fill="'+(isCur?'#fff':'#9b59b6')+'" fill-opacity="'+(isCur?0.4:1)+'" stroke="'+((sel||lst)&&isCur?'#e67e00':(isCur?'#000':'#fff'))+'" stroke-width="'+((sel||lst)&&isCur?mr*0.3:mr*0.18)+'" opacity="'+(isCur?1:0.85)+'" pointer-events="none"/>';
-      if(isCur)s+='<text'+(lst?' id="lastt"':'')+' x="'+(x+mr*0.62)+'" y="'+(y-mr*0.28)+'" text-anchor="middle" font-size="'+(mr*0.95)+'" font-weight="bold" fill="#000" stroke="#fff" stroke-width="'+(mr*0.12)+'" paint-order="stroke" pointer-events="none">'+(a.n||ai+1)+'</text>'})});
+      if(isCur)s+='<text'+(lst?' id="lastt"':'')+' x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central" font-size="'+(mr*1.15)+'" font-weight="bold" fill="#000" stroke="#fff" stroke-width="'+(mr*0.14)+'" paint-order="stroke" pointer-events="none">'+(a.n||ai+1)+'</text>'})});
   return s}
 
 /* ================= 記録画面 ================= */
