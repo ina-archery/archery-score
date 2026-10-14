@@ -254,6 +254,8 @@ var ACT={
  goal:function(){var S=curS();if(!S)return;var v=prompt(t('目標点数を入力（空で解除）'),S.goal||'');if(v===null)return;S.goal=Math.max(0,Math.min(maxArrows(S)*10,Math.round(+v)||0));save();render()},
  calAdd:function(){var d=prompt(t('日付（例 2026-11-03）'),today());if(!d)return;if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.trim())){alert(t('日付は 2026-11-03 の形で入力してください'));return}var p=d.trim().split('-');d=p[0]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[2]).slice(-2);var ti=prompt(t('予定の名前（例 新人戦）'),'');if(!ti)return;DB.events.push({id:uid(),date:d,title:ti,kind:'試合'});save();render()},
  calDel:function(b){if(confirm(t('この予定を削除しますか？'))){DB.events=DB.events.filter(function(e){return e.id!==b.dataset.id});save();render()}},
+ arrTag:function(b){var a=ui.anaSelA;if(!a)return;a.tag=(a.tag===b.dataset.v)?null:b.dataset.v;save();render()},
+ arrPick:function(b){var n=+b.dataset.n,hit=null;(ui.anaAll||[]).forEach(function(p){if(p.n===n&&!hit)hit=p});if(hit){ui.anaSelA=hit.a;render()}},
  anaEnd:function(b){ui.anaEnd=b.dataset.v;render()},
  calDay:function(b){ui.calSel=b.dataset.v;render()},
  calMonth:function(b){ui.calM=(ui.calM||0)+(+b.dataset.v);render()},
@@ -296,6 +298,7 @@ var ACT={
 };
 document.addEventListener('click',function(e){var b=e.target.closest('[data-act]');if(!b||!ACT[b.dataset.act])return;ACT[b.dataset.act](b,e)});
 document.addEventListener('input',function(e){var x=e.target;
+  if(x.dataset&&x.dataset.arrc&&ui.anaSelA){ui.anaSelA.c=x.value;save();return}
   if(x.dataset&&x.dataset.gear){var S0=curS();if(S0){S0.gear=S0.gear||{};S0.gear[x.dataset.gear]=x.value;ui.info=true;save()}}
   if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;save();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
   if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake()}});
@@ -341,6 +344,10 @@ document.addEventListener('wheel',function(ev){var svg=ev.target.closest&&ev.tar
   var v=getView(svg),q=svgPt(ev,svg),r=svg.getBoundingClientRect(),f=ev.deltaY<0?0.8:1.25,w=v[2]*f,h=v[3]*f;
   setView(svg,[q.x-(ev.clientX-r.left)/r.width*w,q.y-(ev.clientY-r.top)/r.height*h,w,h])},{passive:false});
 
+document.addEventListener('click',function(ev){var svg=ev.target.closest&&ev.target.closest('#map');if(!svg||!ui.anaPts)return;
+  var pt=svgPt(ev,svg),best=null,bd=1e9;ui.anaPts.forEach(function(p){var d=Math.hypot(p.x-pt.x,p.py-pt.y);if(d<bd){bd=d;best=p}});
+  ui.anaSelA=(best&&bd<=ui.anaMr*4)?best.a:null;render()});
+
 /* ================= 履歴 ================= */
 function evTag(d){var e=DB.events.filter(function(x){return x.date===d}).map(function(x){return x.title});return e.length?' 📅'+esc(e.join('・')):''}
 function listItem(s){var sub,title;
@@ -369,7 +376,7 @@ function renderAna(){var el=$('#v-ana'),S=curS(),h='';
   var sc=scopeHalves();
   if(ui.anaScope==='cur'&&(!S||S.type!=='score')){el.innerHTML=h+'<div class="card"><p class="note">'+t('分析する記録（通常の記録）を開いてください。')+'</p></div>';bindAna();return}
   var cnt={},tot=0,sum=0,pts=[],sq=0;
-  sc.forEach(function(o){var hf=o.S.halves[o.hi];hf.ends.forEach(function(en,ei){en.forEach(function(a,ai){if(!a)return;var k=a.x?'X':String(a.s);cnt[k]=(cnt[k]||0)+1;tot++;sum+=a.s;sq+=a.s*a.s;var ge=o.hi*hf.ends.length+ei+1;if(a.px!=null)pts.push({x:a.px,sp:a.sp||0,f:hf.f,py:a.py,e:ge,n:(ge-1)*o.S.per+(a.n||ai+1)})})})});
+  sc.forEach(function(o){var hf=o.S.halves[o.hi];hf.ends.forEach(function(en,ei){en.forEach(function(a,ai){if(!a)return;var k=a.x?'X':String(a.s);cnt[k]=(cnt[k]||0)+1;tot++;sum+=a.s;sq+=a.s*a.s;var ge=o.hi*hf.ends.length+ei+1;if(a.px!=null)pts.push({x:a.px,sp:a.sp||0,f:hf.f,py:a.py,a:a,e:ge,n:(ge-1)*o.S.per+(a.n||ai+1)})})})});
   if(!tot){el.innerHTML=h+'<div class="card"><p class="note">'+t('まだ矢のデータがありません。')+'</p></div>';bindAna();return}
   var avg=sum/tot,sd=Math.sqrt(Math.max(0,sq/tot-avg*avg));
   h+='<div class="card"><h2>'+t('全体')+'</h2><div class="stat"><div><small>'+t('矢数')+'</small><b>'+tot+'</b></div><div><small>'+t('平均/矢')+'</small><b>'+f2(avg)+'</b></div><div><small>'+t('ばらつき(SD)')+'</small><b>'+f2(sd)+'</b></div></div></div>';
@@ -382,7 +389,7 @@ function renderAna(){var el=$('#v-ana'),S=curS(),h='';
   h+='<div class="card"><h2>'+t('エンド別の平均（疲れ・集中の傾向）')+'</h2>'+Object.keys(ea).map(function(k){var a=ea[k].t/ea[k].n;return '<div class="bar"><b style="width:2.2em">'+(+k+1)+'E</b><i style="width:'+Math.round(a*6.2)+'%"></i><span>'+f2(a)+'</span></div>'}).join('')+'</div>';
   if(pts.length){var f0=FACES[pts[0].f]||FACES['122'],pf=pts[0].f;pts=pts.filter(function(p){return p.f===pf});
     var maxE=0;pts.forEach(function(p){if(p.e>maxE)maxE=p.e});
-    var selE=(ui.anaEnd&&ui.anaEnd!=='all'&&+ui.anaEnd<=maxE)?+ui.anaEnd:0,allN=pts.length;
+    var selE=(ui.anaEnd&&ui.anaEnd!=='all'&&+ui.anaEnd<=maxE)?+ui.anaEnd:0,allN=pts.length,allPts=pts.slice();ui.anaAll=allPts;
     var endChips='<div class="chips" style="margin-top:6px"><button class="'+(!selE?'on':'')+'" data-act="anaEnd" data-v="all">'+t('全部')+'</button>'+Array.apply(null,{length:maxE}).map(function(_,i){return '<button class="'+(selE===i+1?'on':'')+'" data-act="anaEnd" data-v="'+(i+1)+'">'+(i+1)+t('立ち')+'</button>'}).join('')+'</div>';
     if(selE)pts=pts.filter(function(p){return p.e===selE});
     var none=!pts.length;if(none)pts=[{x:0,py:0,e:selE,n:0}];
@@ -390,16 +397,28 @@ function renderAna(){var el=$('#v-ana'),S=curS(),h='';
     var vb=vbOf([[0,0]],g.R,1.5),mr=g.R*0.022*(f0.spots>1?1.4:1);
     var mx0=0,my0=0;pts.forEach(function(p){mx0+=p.x;my0+=p.py});mx0/=pts.length;my0/=pts.length;
     var rr=0;pts.forEach(function(p){rr+=Math.sqrt((p.x-mx0)*(p.x-mx0)+(p.py-my0)*(p.py-my0))});rr/=pts.length;
-    var svg='<svg viewBox="'+vb.join(' ')+'" style="max-width:520px;margin:0 auto">';svg+=faceSVG(f0,0,0);
-    pts.forEach(function(p){if(none)return;if(selE){svg+='<circle cx="'+p.x+'" cy="'+p.py+'" r="'+(mr*1.9)+'" fill="#fff" stroke="#7b1fa2" stroke-width="'+(mr*0.4)+'"/><text x="'+p.x+'" y="'+p.py+'" font-size="'+(mr*2)+'" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">'+p.n+'</text>'}
-      else svg+='<circle cx="'+p.x+'" cy="'+p.py+'" r="'+mr+'" fill="#fff" fill-opacity=".85" stroke="#7b1fa2" stroke-width="'+(mr*0.35)+'"/>'});
+    var svg='<svg id="map" viewBox="'+vb.join(' ')+'" style="max-width:520px;margin:0 auto">';svg+=faceSVG(f0,0,0);
+    pts.forEach(function(p){if(none)return;var a=p.a,tg=a&&a.tag,sl=ui.anaSelA===a,fl=tg==='good'?'#7be495':tg==='miss'?'#ff8a80':tg==='odd'?'#ffd180':'#fff',sk=sl?'#e67e00':'#7b1fa2',r=selE?mr*1.9:((sl||tg)?mr*1.5:mr);
+      svg+='<circle cx="'+p.x+'" cy="'+p.py+'" r="'+r+'" fill="'+fl+'" fill-opacity="'+(selE||tg?1:.85)+'" stroke="'+sk+'" stroke-width="'+(mr*(sl?0.7:0.35))+'"/>';
+      if(selE)svg+='<text x="'+p.x+'" y="'+p.py+'" font-size="'+(mr*2)+'" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central" pointer-events="none">'+p.n+'</text>'});
+    ui.anaPts=none?[]:pts;ui.anaMr=mr;
     var cyc=0;
     svg+='<circle cx="'+mx0+'" cy="'+(my0+cyc)+'" r="'+rr+'" fill="none" stroke="#fff" stroke-width="'+(mr*0.3)+'" stroke-dasharray="'+(mr)+' '+(mr*0.7)+'"/><path d="M'+(mx0-mr*1.6)+' '+(my0+cyc)+'H'+(mx0+mr*1.6)+'M'+mx0+' '+(my0+cyc-mr*1.6)+'V'+(my0+cyc+mr*1.6)+'" stroke="#e67e00" stroke-width="'+(mr*0.5)+'"/></svg>';
     h+='<div class="card"><h2>'+t('着弾マップ（{0}・{1}本）',t(f0.l),selE?(none?0:pts.length)+'/'+allN:allN)+'</h2>'+endChips+svg
       +'<div class="stat"><div><small>'+t('グループの中心')+'</small><b>'+(mx0>=0?t('右'):t('左'))+f2(Math.abs(mx0))+'cm<br>'+(my0>=0?t('下'):t('上'))+f2(Math.abs(my0))+'cm</b></div><div><small>'+t('広がり(平均半径)')+'</small><b>'+f2(rr)+'cm</b></div><div><small>'+t('最も外れた矢')+'</small><b>'+f2(Math.max.apply(null,pts.map(function(p){return Math.sqrt(p.x*p.x+p.py*p.py)})))+'cm</b></div></div>'
-      +'<p class="note">'+t('オレンジの＋が矢群の中心、白い点線の輪が広がりです。中心が的の中心からずれている向きに、サイトを動かす目安になります（距離やサイトの種類で動かす量は変わります）。位置を的タッチで入力した矢だけが対象です。')+'</p></div>'}
+      +'<p class="note">'+t('オレンジの＋が矢群の中心、白い点線の輪が広がりです。中心が的の中心からずれている向きに、サイトを動かす目安になります（距離やサイトの種類で動かす量は変わります）。位置を的タッチで入力した矢だけが対象です。')+'</p></div>'+arrowPanel(allPts)}
   else h+='<div class="card"><p class="note">'+t('着弾マップは「的にタッチ」で入力した矢が対象です。')+'</p></div>';
   el.innerHTML=h;bindAna()}
+var TAGS=[['good','👍 良い'],['miss','⚠ ミス'],['odd','🤔 気になる']];
+function arrowPanel(all){var sel=null;all.forEach(function(p){if(p.a===ui.anaSelA)sel=p});
+  var h='<div class="card"><h2>'+t('矢ごとのメモ')+'</h2>';
+  if(!sel)h+='<p class="note" style="margin:0">'+t('着弾マップの矢をタップすると、その矢に「良い／ミス／気になる」の印とコメントを残せます。')+'</p>';
+  else{var a=sel.a;
+    h+='<div class="now" style="margin:0 0 6px">'+sel.n+t('番')+' <span>'+sel.e+t('立ち目')+' ・ '+lab(a)+t('点')+'</span></div><div class="chips">'+TAGS.map(function(g){return '<button class="'+(a.tag===g[0]?'on':'')+'" data-act="arrTag" data-v="'+g[0]+'">'+t(g[1])+'</button>'}).join('')+'</div>'
+     +'<textarea rows="2" data-arrc="1" placeholder="'+esc(t('例: リリースで引っかかった／風で流された'))+'">'+esc(a.c||'')+'</textarea>'}
+  var memo=all.filter(function(p){return p.a.c||p.a.tag});
+  if(memo.length)h+='<div style="margin-top:8px">'+memo.map(function(p){var g=TAGS.filter(function(x){return x[0]===p.a.tag})[0];return '<div class="note" style="margin:2px 0;cursor:pointer" data-act="arrPick" data-n="'+p.n+'"><b>'+p.n+t('番')+'</b> '+lab(p.a)+(g?' '+t(g[1]):'')+(p.a.c?' ： '+esc(p.a.c):'')+'</div>'}).join('')+'</div>';
+  return h+'</div>'}
 function bindAna(){var r=$('#aR'),d=$('#aD');if(r)r.onchange=function(){ui.anaRound=this.value;render()};if(d)d.onchange=function(){ui.anaDist=this.value;render()}}
 function lineChart(data){var W=320,Hh=150,P=26,mn=Math.min.apply(null,data.map(function(d){return d.v})),mxv=Math.max.apply(null,data.map(function(d){return d.v}));
   if(mxv-mn<0.2){mn-=0.2;mxv+=0.2}var pad=(mxv-mn)*0.15;mn-=pad;mxv+=pad;
