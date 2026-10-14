@@ -310,6 +310,7 @@ document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e
 
 /* ----- 的タッチ入力（2本指で拡大・タップで入力） ----- */
 var tp={p:{},svg:null,moved:false,pinch:false,drag:false,timer:null};
+function arR(S,g){return DB.set.lineBasis==='real'?(S.arrowMm||5.5)/20*(+DB.set.cursorX||1):markR(g)*0.8}
 function markR(g){return g.R*0.034*(g.f.spots>1?1.3:1)}
 function placeHit(){var o=document.getElementById('lasthit');if(o)o.remove()}
 function svgPt(ev,svg){var q=svg.createSVGPoint();q.x=ev.clientX;q.y=ev.clientY;var r=q.matrixTransform(svg.getScreenCTM().inverse());return {x:r.x,y:r.y}}
@@ -322,13 +323,13 @@ function setView(svg,v){var B=baseView(),w=Math.max(B[2]/6,Math.min(B[2],v[2])),
 function zoomed(){var g=currentGeom();return !!(ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)}
 function placeAt(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),r=svg.getBoundingClientRect();
   if(!(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom))return;
-  var sp=spotOf(g,pt.x,pt.y),dx=pt.x-g.cps[sp][0],dy=pt.y-g.cps[sp][1],sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1));
+  var sp=spotOf(g,pt.x,pt.y),dx=pt.x-g.cps[sp][0],dy=pt.y-g.cps[sp][1],sc=scoreAt(g.f,dx,dy,arR(S,g));
   vib();putArrow(S,{s:sc.s,x:sc.x,px:Math.round(dx*10)/10,py:Math.round(dy*10)/10,sp:sp})}
 function pinchInit(){var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]];
   tp.d0=Math.hypot(a.x-b.x,a.y-b.y)||1;tp.m0={clientX:(a.x+b.x)/2,clientY:(a.y+b.y)/2};tp.v0=getView(tp.svg);tp.q0=svgPt(tp.m0,tp.svg)}
 var HOLD=170;
 function pvShow(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),sp=spotOf(g,pt.x,pt.y),dx=pt.x-g.cps[sp][0],dy=pt.y-g.cps[sp][1],
-  sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1)),mr=markR(g),c=svg.querySelector('#pvc'),tx=svg.querySelector('#pvt'),ns='http://www.w3.org/2000/svg';
+  sc=scoreAt(g.f,dx,dy,arR(S,g)),mr=markR(g),c=svg.querySelector('#pvc'),tx=svg.querySelector('#pvt'),ns='http://www.w3.org/2000/svg';
   if(!c){c=document.createElementNS(ns,'circle');c.id='pvc';c.setAttribute('pointer-events','none');svg.appendChild(c);tx=document.createElementNS(ns,'text');tx.id='pvt';tx.setAttribute('pointer-events','none');svg.appendChild(tx)}
   c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',mr*0.8);c.setAttribute('fill','#fff');c.setAttribute('fill-opacity','0.4');c.setAttribute('stroke','#e67e00');c.setAttribute('stroke-width',mr*0.3);
   var v=getView(svg),rc=svg.getBoundingClientRect(),k=v[2]/rc.width,off=48*k,fs=30*k,ty=pt.y-off;if(ty-fs<v[1])ty=pt.y+off+fs;
@@ -606,7 +607,8 @@ function renderSet(){var s=DB.set,h='';
    +'<label>'+t('矢の太さ（mm）— ライン接触の判定に使います（矢の外径。ライン上は高い方の得点）')+'</label><input type="number" step="0.1" min="3" max="10" data-set="arrowMm" value="'+s.arrowMm+'">'
    +'<p class="note">'+t('目安: カーボン外径 約5.5〜6.0mm（新しい記録から反映）')+'</p></div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
-   +'<label>'+t('ライン判定のゆるさ（タップした位置から、矢の太さ×この倍率の範囲に線があれば高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
+   +'<label>'+t('ライン判定の基準（線に触れていたら高い方の得点）')+'</label><select data-set="lineBasis">'+[['circle',t('画面の矢の丸の大きさ（丸が線に触れたら）')],['real',t('実際の矢の太さ（下の設定を使う）')]].map(function(z){return '<option value="'+z[0]+'"'+((s.lineBasis||'circle')===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
+   +'<label>'+t('実際の矢の太さを使うときのゆるさ（矢の太さ×この倍率）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
    +'<p class="note">'+t('的は、2本指で拡大・移動してからタップすると細かく狙えます。すぐに指を動かすと画面がスクロールします。押さえたまま指を動かすと、丸を動かして位置を合わせられます。')+'</p>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
