@@ -47,6 +47,11 @@ var ROUNDS=[
  {id:'1440w',l:'WA 1440ラウンド 女子（144射）70-60-50-30m',per:6,h:[['70m','122',36],['60m','122',36],['50m','80',36],['30m','80',36]]},
  {id:'free',l:'自由設定（練習・その他）',per:6,h:[['','122',36]]}
 ];
+var RGROUPS=[
+ {id:'g70',l:'70m',r:['70']},{id:'g60',l:'60m',r:['60']},{id:'g50',l:'50m',r:['50bb','50c','50c6','5030']},
+ {id:'gjr',l:'ジュニア',r:['40u15','30jh','18es','40cu15','30bbu15']},{id:'gin',l:'インドア',r:['18in','18int','18tri','25in']},
+ {id:'gwa',l:'WA 1440',r:['1440m','1440w']},{id:'gfree',l:'自由設定',r:['free']}];
+function rgroupOf(id){return RGROUPS.filter(function(g){return g.r.indexOf(id)>=0})[0]||RGROUPS[0]}
 // match play (JAF rules art.208 / World Archery)
 var MKINDS={
  'r-ind':{l:'個人戦・セット制（3射×5セット・6ポイント先取）',per:3,sets:5,mode:'set',win:6,so:1},
@@ -109,6 +114,10 @@ function stat(S){
     h.ends.forEach(function(en){en.forEach(function(a){if(!a)return;q.sum+=a.s;q.n++;if(a.s===10){q.tens++;if(a.x)q.xs++}if(a.s===9)q.nines++})});
     o.half.push(q);o.total+=q.sum;o.n+=q.n;o.tens+=q.tens;o.xs+=q.xs;o.nines+=q.nines});
   o.max=o.cap*10;o.avg=o.n?o.total/o.n:0;o.indoor=ind;o.done=o.n>=o.cap;return o}
+function ord(en){var ix=en.map(function(_,i){return i});
+  if(DB.set.sortEnd===false||!en.length||!en.every(Boolean))return ix;
+  var v=function(a){return a.s*2+(a.x?1:0)};
+  return ix.sort(function(p,q){return v(en[q])-v(en[p])||p-q})}
 function endTotal(en){var q=0;en.forEach(function(a){if(a)q+=a.s});return q}
 function bestOf(S){var b=null;DB.sessions.forEach(function(x){if(x.type!=='score'||x.id===S.id||x.round!==S.round||maxArrows(x)!==maxArrows(S))return;var st=stat(x);if(!st.done)return;if(!b||st.total>b.t)b={t:st.total,d:x.date}});return b}
 function nextEmpty(S,h,e,a){var order=[];
@@ -182,27 +191,27 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   if(S.halves.length>1){h+='<div class="tabs">'+S.halves.map(function(hh,i){return '<button class="'+(c.h===i?'on':'')+'" data-act="tab" data-v="'+i+'">'+t('{0}回目 {1}',i+1,esc(hh.d))+'<br><small>'+t('{0}点',st.half[i].sum)+'</small></button>'}).join('')+'</div>'}
   var cell=H.ends[c.e][c.a];
   h+='<div class="now">'+esc(H.d)+'　'+t('{0}エンド目',c.e+1)+'　'+t('{0}本目',c.a+1)+' <span>'+(cell?t('（{0}を書き換え）',lab(cell)):(st.done?t('（全部入力済み）'):''))+'</span></div>';
-  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button></div>';
-  if(mode==='target'){
-    var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
-    h+='<div class="tgwrap"><svg id="tg" viewBox="'+vb+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g><g id="prev" visibility="hidden"><circle r="'+(g.R*0.05)+'" fill="none" stroke="#e67e00" stroke-width="'+(g.R*0.012)+'"/></g></svg></div>'
-      +'<div id="loupe"><svg id="lsv" viewBox="0 0 10 10"><use href="#world"/><circle id="lc1" fill="none" stroke="#000" stroke-width="4.5" pathLength="16" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/><circle id="lc2" fill="none" stroke="#fff" stroke-width="4.5" pathLength="16" stroke-dasharray="2 2" stroke-dashoffset="-2" vector-effect="non-scaling-stroke"/></svg></div><div id="lval"></div>'
-      +'<p class="note">'+t('的を少し押したままにすると拡大表示が出て、動かして合わせられます。指を離した位置の得点が入ります。すぐ指を動かすと画面をスクロールできます。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+' '+t('的の外を指して離すとミスになります。')+'</p>'}
-  else{h+=keypad(g.f,'key')}
-  h+='<div class="row"><button data-act="miss">'+t('ミス (M)')+'</button><button data-act="undo">'+t('1本戻す')+'</button><button data-act="clr">'+t('選んだ矢を消す')+'</button>'+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
-  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0;
-  h+='<div class="card">';
+  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h;h='';
+  h+='<div class="scwrap">';
   if(S.halves.length>1)h+='<div class="chips"><button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button></div>';
+  h+='<div class="chips"><button class="'+(DB.set.sortEnd!==false?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
     h+='<table class="'+(per>8?'many':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:11%">'+new Array(per+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
     for(var i=1;i<=per;i++)h+='<th>'+i+'</th>';h+='<th>'+t('計')+'</th><th>'+t('累計')+'</th></tr></thead><tbody>';
     HH.ends.forEach(function(en,e){var q=endTotal(en);run+=q;var any=en.some(Boolean);
-      h+='<tr><th>'+(e+1)+'</th>'+en.map(function(a,i){return '<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}).join('')+new Array(per-en.length+1).join('<td></td>')+'<td class="tot">'+(any?q:'')+'</td><td class="tot">'+(any?run:'')+'</td></tr>'});
+      h+='<tr><th>'+(e+1)+'</th>'+ord(en).map(function(i){var a=en[i];return '<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}).join('')+new Array(per-en.length+1).join('<td></td>')+'<td class="tot">'+(any?q:'')+'</td><td class="tot">'+(any?run:'')+'</td></tr>'});
     h+='</tbody><tfoot><tr><th colspan="'+(per+1)+'">'+(S.halves.length>1?t('{0}回目 ',hi+1):'')+t('小計')+'　'+tens(st,hs)+'</th><td colspan="2">'+hs.sum+'</td></tr>';
     if(S.halves.length>1&&(!showAll||hi===list[list.length-1]))h+='<tr><th colspan="'+(per+1)+'">'+t('合計')+'</th><td colspan="2">'+st.total+'</td></tr>';
     h+='</tfoot></table>'});
-  h+='</div>';
+  h+='</div>';var tb=h;h=hMain;
+  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button></div>';
+  if(mode==='target'){
+    var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
+    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:'+((ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)?'none':'pan-y')+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g><g id="prev" visibility="hidden"><circle r="'+(g.R*0.05)+'" fill="none" stroke="#e67e00" stroke-width="'+(g.R*0.012)+'"/></g></svg></div>'+tb
+      +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大して、拡大したままタップできます。拡大中は1本指で動かせます。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
+  else{h+=keypad(g.f,'key')+tb}
+  h+='<div class="row"><button data-act="undo">'+t('1本戻す')+'</button>'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'&&zoomed()?'<button data-act="zoomReset">'+t('拡大を戻す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
     +'<div class="grid2"><div><label>'+t('氏名')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('日付')+'</label><input type="date" data-bind="date" value="'+esc(S.date)+'"></div></div>'
     +'<label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'">'
@@ -233,8 +242,10 @@ var ACT={
  mode:function(b){ui.mode=b.dataset.v;DB.set.mode=ui.mode;save();render()},
  key:function(b){keyIn(b.dataset.v)},
  miss:function(){keyIn('M')},
+ zoomReset:function(){ui.tgView=null;render()},
  viewAll:function(){ui.all=!ui.all;render()},
  cellSel:function(b){var S=curS();S.cur={h:b.dataset.h!=null?+b.dataset.h:S.cur.h,e:+b.dataset.e,a:+b.dataset.a};save();render()},
+ sortEnd:function(){DB.set.sortEnd=DB.set.sortEnd===false;save();render()},
  tbl:function(b){ui.tableAll=b.dataset.v==='1';render()},
  clr:function(){var S=curS(),c=S.cur;S.halves[c.h].ends[c.e][c.a]=null;save();render()},
  undo:function(){var S=curS(),best=null;
@@ -244,6 +255,7 @@ var ACT={
  create:function(){createFromDlg()},
  closeDlg:function(){$('#dlg').close()},
  dlgKind:function(b){ui.dlgKind=b.dataset.v;openNew(true)},
+ rgrp:function(b){var cur=readDlg()||{};cur.round=b.dataset.v;cur.per=undefined;ui.dlgVals=cur;openNew()},
  open:function(b){DB.cur=b.dataset.id;save();ui.all=false;show('rec')},
  del:function(b){if(confirm(t('この記録を削除しますか？（元に戻せません）'))){DB.sessions=DB.sessions.filter(function(s){return s.id!==b.dataset.id});if(DB.cur===b.dataset.id)DB.cur=null;save();render()}},
  histRound:function(b){ui.histRound=b.dataset.v;render()},
@@ -270,44 +282,44 @@ document.addEventListener('input',function(e){var x=e.target;
 document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
 document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e.target.open},true);
 
-/* ----- 的タッチ入力（拡大ルーペ付き） ----- */
-var drag=null;
-function svgPt(ev,svg,off){var p=svg.createSVGPoint();p.x=ev.clientX;p.y=ev.clientY-off;var q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:q.x,y:q.y}}
+/* ----- 的タッチ入力（2本指で拡大・タップで入力） ----- */
+var tp={p:{},svg:null,moved:false,pinch:false};
+function svgPt(ev,svg){var q=svg.createSVGPoint();q.x=ev.clientX;q.y=ev.clientY;var r=q.matrixTransform(svg.getScreenCTM().inverse());return {x:r.x,y:r.y}}
 function currentGeom(){var S=curS();return geom(S.halves[S.cur.h])}
 function spotOf(g,x,y){if(g.cps.length===1)return 0;var bi=0,bd=1e9;g.cps.forEach(function(cp,i){var d=(x-cp[0])*(x-cp[0])+(y-cp[1])*(y-cp[1]);if(d<bd){bd=d;bi=i}});return bi}
-function update(ev){var svg=drag.svg,g=drag.g,off=0;
-  var p=svgPt(ev,svg,off),r=svg.getBoundingClientRect();
-  drag.p=p;drag.inside=(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY-off>=r.top&&ev.clientY-off<=r.bottom);
-  var sp=spotOf(g,p.x,p.y),dx=p.x-g.cps[sp][0],dy=p.y-g.cps[sp][1];drag.sp=sp;drag.dx=dx;drag.dy=dy;
-  var S=curS(),sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1));drag.sc=sc;
-  var pv=$('#prev');pv.setAttribute('visibility','visible');pv.setAttribute('transform','translate('+p.x+' '+p.y+')');
-  var span=(g.f.spots>1?10:g.R/2.6)/(+DB.set.zoom||1.5),ar=(S.arrowMm||5.5)/20*(+DB.set.cursorX||1),lo=$('#loupe'),lv=$('#lval'),lsv=$('#lsv');
-  lsv.setAttribute('viewBox',(p.x-span)+' '+(p.y-span)+' '+(span*2)+' '+(span*2));
-  ['lc1','lc2'].forEach(function(id){var c=$('#'+id);c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',ar)});
-  var left=(ev.clientX>window.innerWidth/2)?12:window.innerWidth-222;
-  var top=Math.max(8,Math.min(r.top+8,window.innerHeight-230));if(r.top<0)top=8;
-  lo.style.display='block';lo.style.left=left+'px';lo.style.top=top+'px';
-  lv.style.display='block';lv.style.left=(left+74)+'px';lv.style.top=(top+216)+'px';
-  lv.textContent=drag.inside?(sc.s===0?'M':(sc.x?'X':sc.s)):t('キャンセル')}
-function endDrag(){var lo=$('#loupe'),lv=$('#lval'),pv=$('#prev');if(lo)lo.style.display='none';if(lv)lv.style.display='none';if(pv)pv.setAttribute('visibility','hidden')}
-// Touch: press and hold ~0.17s = zoom loupe + place; start moving right away = normal page scroll; quick tap = place directly.
-// Mouse: works immediately.
-var HOLD=170;
-function startDrag(ev,svg){drag.active=true;drag.svg=svg;try{svg.setPointerCapture(ev.pointerId)}catch(e){}vib();update(drag.last||ev)}
+function getView(svg){return svg.getAttribute('viewBox').split(' ').map(Number)}
+function baseView(){return currentGeom().vb.slice()}
+function setView(svg,v){var B=baseView(),w=Math.max(B[2]/6,Math.min(B[2],v[2])),h=w*B[3]/B[2],x=Math.max(B[0],Math.min(B[0]+B[2]-w,v[0])),y=Math.max(B[1],Math.min(B[1]+B[3]-h,v[1]));
+  v=[x,y,w,h];svg.setAttribute('viewBox',v.join(' '));ui.tgView=v;ui.tgKey=B.join(' ');svg.style.touchAction=(w<B[2]-0.01)?'none':'pan-y'}
+function zoomed(){var g=currentGeom();return !!(ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)}
+function placeAt(ev,svg){var g=currentGeom(),S=curS(),pt=svgPt(ev,svg),r=svg.getBoundingClientRect();
+  if(!(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom))return;
+  var sp=spotOf(g,pt.x,pt.y),dx=pt.x-g.cps[sp][0],dy=pt.y-g.cps[sp][1],sc=scoreAt(g.f,dx,dy,(S.arrowMm||5.5)/20*(+DB.set.cursorX||1));
+  vib();putArrow(S,{s:sc.s,x:sc.x,px:Math.round(dx*10)/10,py:Math.round(dy*10)/10,sp:sp})}
+function pinchInit(){var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]];
+  tp.d0=Math.hypot(a.x-b.x,a.y-b.y)||1;tp.m0={clientX:(a.x+b.x)/2,clientY:(a.y+b.y)/2};tp.v0=getView(tp.svg);tp.q0=svgPt(tp.m0,tp.svg)}
 document.addEventListener('pointerdown',function(ev){var svg=ev.target.closest&&ev.target.closest('#tg');if(!svg||!curS())return;
-  if(drag&&drag.timer)clearTimeout(drag.timer);
-  drag={svg:svg,g:currentGeom(),id:ev.pointerId,sx:ev.clientX,sy:ev.clientY,last:ev,active:false};
-  if(ev.pointerType==='touch'){drag.timer=setTimeout(function(){if(drag&&drag.id===ev.pointerId&&!drag.active)startDrag(ev,svg)},HOLD)}
-  else{ev.preventDefault();startDrag(ev,svg)}});
-document.addEventListener('pointermove',function(ev){if(!drag||ev.pointerId!==drag.id)return;drag.last=ev;
-  if(!drag.active){if(Math.abs(ev.clientX-drag.sx)>8||Math.abs(ev.clientY-drag.sy)>8){clearTimeout(drag.timer);drag=null}return}
-  ev.preventDefault();update(ev)},{passive:false});
-document.addEventListener('touchmove',function(ev){if(drag&&drag.active&&ev.cancelable)ev.preventDefault()},{passive:false});
-document.addEventListener('pointerup',function(ev){if(!drag||ev.pointerId!==drag.id)return;clearTimeout(drag.timer);
-  var d=drag;drag=null;if(!d.active){drag=d;d.active=true;update(ev);drag=null}
-  endDrag();if(!d.inside)return;var S=curS();
-  putArrow(S,{s:d.sc.s,x:d.sc.x,px:Math.round(d.dx*10)/10,py:Math.round(d.dy*10)/10,sp:d.sp})});
-document.addEventListener('pointercancel',function(){if(drag)clearTimeout(drag.timer);drag=null;endDrag()});
+  if(tp.svg!==svg){tp.p={}}tp.svg=svg;tp.p[ev.pointerId]={x:ev.clientX,y:ev.clientY,sx:ev.clientX,sy:ev.clientY};
+  try{svg.setPointerCapture(ev.pointerId)}catch(e){}
+  var n=Object.keys(tp.p).length;
+  if(n===1){tp.moved=false;tp.pinch=false;tp.v0=getView(svg)}
+  else{tp.pinch=true;tp.moved=true;pinchInit()}
+  if(ev.pointerType!=='touch')ev.preventDefault()});
+document.addEventListener('pointermove',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;P.x=ev.clientX;P.y=ev.clientY;
+  var svg=tp.svg,n=Object.keys(tp.p).length,r=svg.getBoundingClientRect();
+  if(n>=2&&tp.pinch){ev.preventDefault();var ids=Object.keys(tp.p),a=tp.p[ids[0]],b=tp.p[ids[1]],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,w=tp.v0[2]/(d/tp.d0),h=w*tp.v0[3]/tp.v0[2];
+    setView(svg,[tp.q0.x-(mx-r.left)/r.width*w,tp.q0.y-(my-r.top)/r.height*h,w,h]);return}
+  if(Math.abs(ev.clientX-P.sx)>8||Math.abs(ev.clientY-P.sy)>8)tp.moved=true;
+  if(tp.moved&&zoomed()&&n===1){ev.preventDefault();var v=tp.v0;setView(svg,[v[0]-(ev.clientX-P.sx)/r.width*v[2],v[1]-(ev.clientY-P.sy)/r.height*v[3],v[2],v[3]])}},{passive:false});
+document.addEventListener('pointerup',function(ev){var P=tp.p[ev.pointerId];if(!P||!tp.svg)return;
+  var svg=tp.svg,wasLast=Object.keys(tp.p).length===1;delete tp.p[ev.pointerId];
+  if(wasLast&&!tp.moved&&!tp.pinch)placeAt(ev,svg);
+  if(!Object.keys(tp.p).length){tp.pinch=false}
+  else{tp.moved=true;tp.v0=getView(svg);var k=Object.keys(tp.p)[0];tp.p[k].sx=tp.p[k].x;tp.p[k].sy=tp.p[k].y}});
+document.addEventListener('pointercancel',function(ev){delete tp.p[ev.pointerId];tp.moved=true;if(!Object.keys(tp.p).length)tp.pinch=false});
+document.addEventListener('wheel',function(ev){var svg=ev.target.closest&&ev.target.closest('#tg');if(!svg||!curS())return;ev.preventDefault();
+  var v=getView(svg),q=svgPt(ev,svg),r=svg.getBoundingClientRect(),f=ev.deltaY<0?0.8:1.25,w=v[2]*f,h=v[3]*f;
+  setView(svg,[q.x-(ev.clientX-r.left)/r.width*w,q.y-(ev.clientY-r.top)/r.height*h,w,h])},{passive:false});
 
 /* ================= 履歴 ================= */
 function listItem(s){var sub,title;
@@ -378,7 +390,10 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
    +'<div class="grid2"><div><label>'+t('氏名')+'</label><input id="d_name" value="'+esc(o.name!=null?o.name:DB.set.name)+'"></div><div><label>'+t('日付')+'</label><input id="d_date" type="date" value="'+esc(o.date||today())+'"></div></div>'
    +'<label>'+t('大会名・場所')+'</label><input id="d_place" value="'+esc(o.place||'')+'">';
   if(k==='score'){var rd=o.round||'70',R=ROUNDS.filter(function(r){return r.id===rd})[0]||ROUNDS[0],perSel=o.per&&o.per!=='m'?+o.per:R.per,manual=(o.per==='m')||([3,6,9,12].indexOf(perSel)<0);
-    h+='<label>'+t('ラウンド')+'</label><select id="d_round" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+ROUNDS.map(function(r){return '<option value="'+r.id+'"'+(r.id===rd?' selected':'')+'>'+esc(t(r.l))+'</option>'}).join('')+'</select>'
+    var G=rgroupOf(rd);
+    h+='<label>'+t('ラウンド')+'</label><div class="chips">'+RGROUPS.map(function(g){return '<button class="'+(g.id===G.id?'on':'')+'" data-act="rgrp" data-v="'+g.r[0]+'">'+t(g.l)+'</button>'}).join('')+'</div>'
+     +(G.r.length>1?'<select id="d_round" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+G.r.map(function(id){var r=ROUNDS.filter(function(x){return x.id===id})[0];return '<option value="'+r.id+'"'+(r.id===rd?' selected':'')+'>'+esc(t(r.l))+'</option>'}).join('')+'</select>'
+       :'<input type="hidden" id="d_round" value="'+rd+'"><p class="note">'+esc(t(R.l))+'</p>')
      +'<div class="grid2"><div><label>'+t('標的面（ラウンドの既定から変更可）')+'</label><select id="d_face"><option value="">'+t('ラウンドの既定')+'</option>'+Object.keys(FACES).map(function(f){return '<option value="'+f+'"'+(o.face===f?' selected':'')+'>'+esc(t(FACES[f].l))+'</option>'}).join('')+'</select></div>'
      +'<div><label>'+t('1エンドの射数')+'</label><select id="d_per" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+[3,6,9,12].map(function(n){return '<option value="'+n+'"'+(!manual&&perSel==n?' selected':'')+'>'+t('{0}射',n)+'</option>'}).join('')+'<option value="m"'+(manual?' selected':'')+'>'+t('手入力')+'</option></select>'+(manual?'<input id="d_perm" type="number" min="1" max="30" style="margin-top:4px" placeholder="'+t('射数（1〜30）')+'" value="'+esc(o.perm||'')+'">':'')+'</div></div>'
      +(rd==='free'?'<div class="grid2"><div><label>'+t('距離（例 30m）')+'</label><input id="d_dist" value="'+esc(o.dist||'')+'"></div><div><label>'+t('矢数 / 1回分')+'</label><input id="d_arrows" type="number" value="'+(o.arrows||36)+'"></div><div><label>'+t('回数（距離の数）')+'</label><input id="d_halves" type="number" min="1" max="6" value="'+(o.halves||1)+'"></div></div>':'')
