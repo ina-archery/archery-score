@@ -585,8 +585,8 @@ function renderSet(){var s=DB.set,h='';
    +'<label>'+t('矢の太さ（mm）— ライン接触の判定に使います（矢の外径。ライン上は高い方の得点）')+'</label><input type="number" step="0.1" min="3" max="10" data-set="arrowMm" value="'+s.arrowMm+'">'
    +'<p class="note">'+t('目安: カーボン外径 約5.5〜6.0mm（新しい記録から反映）')+'</p></div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
-   +'<label>'+t('カーソルの〇の大きさ（この〇が線に触れたら高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('実寸（矢の太さ）')],[2,t('矢の2倍')],[3,t('矢の3倍')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
-   +'<label>'+t('拡大ルーペの倍率（〇が矢の太さ。〇が線に触れたら高い方の得点）')+'</label><select data-set="zoom">'+[[1.5,t('標準')],[2.5,t('大')],[4,t('特大')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.zoom===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
+   +'<label>'+t('ライン判定の幅（タップした位置の周りがこの大きさ。線に触れたら高い方の得点）')+'</label><select data-set="cursorX">'+[[1,t('実寸（矢の太さ）')],[2,t('矢の2倍')],[3,t('矢の3倍')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
+   +'<p class="note">'+t('的は、2本指で拡大してからタップすると細かく狙えます。拡大中は1本指で動かせます。')+'</p>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
