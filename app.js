@@ -192,7 +192,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="now">'+esc(H.d)+'　'+t('{0}エンド目',c.e+1)+'　'+t('{0}本目',c.a+1)+' <span>'+(cell?t('（{0}を書き換え）',lab(cell)):(st.done?t('（全部入力済み）'):''))+'</span></div>';
   var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h;h='';
   h+='<div class="scwrap">';
-  if(S.halves.length>1)h+='<div class="chips"><button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button></div>';
+  h+='<div class="chips">'+(S.halves.length>1?'<button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button>':'')+'<button class="pri" data-act="undo">'+t('↩ 1本戻す')+'</button>'+(mode==='target'?'<button data-act="zoomReset"'+(zoomed()?'':' disabled')+'>'+t('🔍 拡大を戻す')+'</button>':'')+'</div>';
   h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
@@ -210,7 +210,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:'+((ui.tgView&&ui.tgKey===g.vb.join(' ')&&ui.tgView[2]<g.vb[2]-0.01)?'none':'pan-y')+'"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g><g id="prev" visibility="hidden"><circle r="'+(g.R*0.05)+'" fill="none" stroke="#e67e00" stroke-width="'+(g.R*0.012)+'"/></g></svg></div>'+tb
       +'<p class="note">'+t('的をタップすると、その位置の得点が入ります。2本指で拡大して、拡大したままタップできます。拡大中は1本指で動かせます。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
-  h+='<div class="row"><button data-act="undo">'+t('1本戻す')+'</button>'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'&&zoomed()?'<button data-act="zoomReset">'+t('拡大を戻す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
+  h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
     +'<div class="grid2"><div><label>'+t('氏名')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('日付')+'</label><input type="date" data-bind="date" value="'+esc(S.date)+'"></div></div>'
     +'<label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'">'
