@@ -77,6 +77,7 @@ var CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatfo
 function defSet(){return {cursorX:2,zoom:1.5,lang:'auto',name:'',arrowMm:5.5,offset:true,sort:true,vib:true,wake:false,bow:'recurve',mode:'target'}}
 function load(){var d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
   if(!d||!d.sessions)d={v:1,sessions:[],cur:null,set:defSet()};
+  if(!d.events)d.events=[];
   d.set=Object.assign(defSet(),d.set||{});
   if(!d.migrated){d.migrated=1;try{var o=JSON.parse(localStorage.getItem('score70m_v1')||'null');if(o&&o.rounds)migrateOld(d,o)}catch(e){}}
   return d}
@@ -114,10 +115,6 @@ function stat(S){
     h.ends.forEach(function(en){en.forEach(function(a){if(!a)return;q.sum+=a.s;q.n++;if(a.s===10){q.tens++;if(a.x)q.xs++}if(a.s===9)q.nines++})});
     o.half.push(q);o.total+=q.sum;o.n+=q.n;o.tens+=q.tens;o.xs+=q.xs;o.nines+=q.nines});
   o.max=o.cap*10;o.avg=o.n?o.total/o.n:0;o.indoor=ind;o.done=o.n>=o.cap;return o}
-function ord(en){var ix=en.map(function(_,i){return i});
-  if(DB.set.sortEnd===false||!en.length||!en.every(Boolean))return ix;
-  var v=function(a){return a.s*2+(a.x?1:0)};
-  return ix.sort(function(p,q){return v(en[q])-v(en[p])||p-q})}
 function endTotal(en){var q=0;en.forEach(function(a){if(a)q+=a.s});return q}
 function bestOf(S){var b=null;DB.sessions.forEach(function(x){if(x.type!=='score'||x.id===S.id||x.round!==S.round||maxArrows(x)!==maxArrows(S))return;var st=stat(x);if(!st.done)return;if(!b||st.total>b.t)b={t:st.total,d:x.date}});return b}
 function nextEmpty(S,h,e,a){var order=[];
@@ -136,7 +133,8 @@ function makeScore(o){
   else hs=R.h.map(function(h){return {d:h[0],f:o.face||h[1],n:h[2]}});
   var halves=hs.map(function(h){var ne=Math.max(1,Math.ceil(h.n/per)),ends=[];for(var e=0;e<ne;e++)ends.push(new Array(Math.min(per,h.n-e*per)).fill(null));return {d:h.d,f:h.f,ends:ends}});
   return {id:uid(),type:'score',created:Date.now(),name:o.name,date:o.date,place:o.place,bow:o.bow,round:o.round,
-    per:per,halves:halves,cur:{h:0,e:0,a:0},memo:'',weather:'',arrowMm:DB.set.arrowMm}}
+    per:per,halves:halves,cur:{h:0,e:0,a:0},memo:'',weather:'',arrowMm:DB.set.arrowMm,gear:lastGear(),goal:0}}
+function lastGear(){var b=null;DB.sessions.forEach(function(x){if(x.type==='score'&&x.gear&&(!b||x.created>b.created))b=x});return b?Object.assign({},b.gear):{}}
 function makeMatch(o){var K=MKINDS[o.kind],sets=[];
   var per=+o.per||K.per;for(var i=0;i<K.sets;i++)sets.push({me:new Array(per).fill(null),op:new Array(per).fill(null)});
   return {id:uid(),type:'match',created:Date.now(),name:o.name,opp:o.opp||'',date:o.date,place:o.place,kind:o.kind,per:per,sets:sets,
@@ -150,11 +148,11 @@ function meName(S){return S.name||t('自分')}
 /* ================= 画面切替 ================= */
 function applyStatic(){document.documentElement.lang=LANG;document.title=t('アーチェリー スコア記録');
   var l=document.querySelectorAll('[data-i18n]');for(var i=0;i<l.length;i++)l[i].textContent=t(l[i].getAttribute('data-i18n'))}
-function show(v){ui.view=v;['rec','hist','ana','set'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');$('#n-'+k).className=(k===v?'on':'')});render()}
+function show(v){ui.view=v;['rec','hist','ana','cal','set'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');$('#n-'+k).className=(k===v?'on':'')});render()}
 function render(){
   var S=curS();applyStatic();
   $('#sub').textContent=S?((S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date):'';
-  if(ui.view==='rec')renderRec();else if(ui.view==='hist')renderHist();else if(ui.view==='ana')renderAna();else renderSet()}
+  if(ui.view==='rec')renderRec();else if(ui.view==='hist')renderHist();else if(ui.view==='ana')renderAna();else if(ui.view==='cal')renderCal();else renderSet()}
 
 /* ================= 的の描画 ================= */
 function faceSVG(f,cx,cy){var n=11-f.min,rw=f.rw,s='';
@@ -187,6 +185,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     +'<div><small>'+t('本数')+'</small><b>'+st.n+'/'+st.cap+'</b></div><div><small>'+t('平均/矢')+'</small><b>'+f2(st.avg)+'</b></div>'
     +(st.indoor?'<div><small>'+t('10 / 9の数')+'</small><b>'+st.tens+' / '+st.nines+'</b></div>':'<div><small>'+t('10+X / X')+'</small><b>'+st.tens+' / '+st.xs+'</b></div>')
     +'<div><small>'+(best?t('ベスト差'):t('ベスト'))+'</small><b>'+(best?(st.done?(st.total-best.t>=0?'+':'')+(st.total-best.t):best.t):'―')+'</b></div></div>';
+  h+=goalCard(S,st);
   h+='<div class="card">';
   if(S.halves.length>1){h+='<div class="tabs">'+S.halves.map(function(hh,i){return '<button class="'+(c.h===i?'on':'')+'" data-act="tab" data-v="'+i+'">'+t('{0}回目 {1}',i+1,esc(hh.d))+'<br><small>'+t('{0}点',st.half[i].sum)+'</small></button>'}).join('')+'</div>'}
   var cell=H.ends[c.e][c.a];
@@ -194,13 +193,13 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h;h='';
   h+='<div class="scwrap">';
   if(S.halves.length>1)h+='<div class="chips"><button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button></div>';
-  h+='<div class="chips"><button class="'+(DB.set.sortEnd!==false?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
+  h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
     h+='<table class="'+(per>8?'many':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:11%">'+new Array(per+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
     for(var i=1;i<=per;i++)h+='<th>'+i+'</th>';h+='<th>'+t('計')+'</th><th>'+t('累計')+'</th></tr></thead><tbody>';
     HH.ends.forEach(function(en,e){var q=endTotal(en);run+=q;var any=en.some(Boolean);
-      h+='<tr><th>'+(e+1)+'</th>'+ord(en).map(function(i){var a=en[i];return '<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}).join('')+new Array(per-en.length+1).join('<td></td>')+'<td class="tot">'+(any?q:'')+'</td><td class="tot">'+(any?run:'')+'</td></tr>'});
+      h+='<tr><th>'+(e+1)+'</th>'+en.map(function(a,i){return '<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}).join('')+new Array(per-en.length+1).join('<td></td>')+'<td class="tot">'+(any?q:'')+'</td><td class="tot">'+(any?run:'')+'</td></tr>'});
     h+='</tbody><tfoot><tr><th colspan="'+(per+1)+'">'+(S.halves.length>1?t('{0}回目 ',hi+1):'')+t('小計')+'　'+tens(st,hs)+'</th><td colspan="2">'+hs.sum+'</td></tr>';
     if(S.halves.length>1&&(!showAll||hi===list[list.length-1]))h+='<tr><th colspan="'+(per+1)+'">'+t('合計')+'</th><td colspan="2">'+st.total+'</td></tr>';
     h+='</tfoot></table>'});
@@ -216,10 +215,18 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     +'<div class="grid2"><div><label>'+t('氏名')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('日付')+'</label><input type="date" data-bind="date" value="'+esc(S.date)+'"></div></div>'
     +'<label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'">'
     +'<div class="grid2"><div><label>'+t('天候・風')+'</label><input data-bind="weather" placeholder="'+esc(t('例: 晴れ・右から3m'))+'" value="'+esc(S.weather)+'"></div><div><label>'+t('弓種')+'</label><select data-bind="bow">'+Object.keys(BOWS).map(function(k){return '<option value="'+k+'"'+(S.bow===k?' selected':'')+'>'+t(BOWS[k])+'</option>'}).join('')+'</select></div></div>'
-    +'<label>'+t('メモ（調子・反省・セッティング）')+'</label><textarea rows="3" data-bind="memo">'+esc(S.memo)+'</textarea></details>';
+    +gearHTML(S)+'<label>'+t('メモ（調子・反省・セッティング）')+'</label><textarea rows="3" data-bind="memo">'+esc(S.memo)+'</textarea></details>';
   h+='<div class="card"><div class="row">'+(NATIVE?'':'<button data-act="print">'+t('🖨 スコアカード印刷')+'</button>')+'<button data-act="csv">'+t('CSV保存')+'</button><button data-act="copy">'+t('結果をコピー')+'</button><button data-act="share">'+t('共有')+'</button></div>'
     +'<div class="row"><button data-act="newDlg" class="pri">'+t('＋ 新しい記録')+'</button><button data-act="go" data-v="ana">'+t('この記録の分析へ')+'</button></div></div>';
   el.innerHTML=h}
+var GEAR=[['sight','サイト（数値）','例: 70m 4.52'],['hite','ハイト（ブレースハイト）','例: 23.5cm'],['tiller','ティラー','例: 上13 下10'],['nock','ノッキングポイント','例: +3mm'],['lbs','ポンド','例: 38lbs'],['arrow','矢（長さ・番手）','例: 29.5in 1000'],['other','その他セッティング','例: クリッカー位置']];
+function gearHTML(S){var g=S.gear||{};
+  return '<h2 style="margin-top:10px">'+t('弓具セッティング')+'</h2><div class="grid2">'+GEAR.map(function(f){return '<div><label>'+t(f[1])+'</label><input data-gear="'+f[0]+'" placeholder="'+esc(t(f[2]))+'" value="'+esc(g[f[0]]||'')+'"></div>'}).join('')+'</div><p class="note">'+t('次の新しい記録には、前回の内容が引き継がれます。')+'</p>'}
+function goalCard(S,st){var g=+S.goal||0;
+  if(!g)return '<div class="row" style="margin:0 0 8px"><button data-act="goal">'+t('🎯 目標点数を設定')+'</button></div>';
+  var left=st.cap-st.n,need=g-st.total,h='<div class="card" style="padding:8px 10px"><div class="now" style="margin:0">'+t('目標 {0}点',g)+' <span>'+(left<=0?(st.total>=g?t('達成！'):t('あと{0}点で届きませんでした',g-st.total)):need<=0?t('達成済み（あと{0}本）',left):t('あと{0}点・残り{1}本 → 平均 {2}点/本',need,left,f2(need/left)))+'</span></div>';
+  if(left>0&&need>0&&need/left>10)h+='<p class="note" style="margin:2px 0 0">'+t('目標が高めです。残りの本数では届かない可能性があります。')+'</p>';
+  return h+'<div class="row" style="margin-top:4px"><button data-act="goal">'+t('目標を変更')+'</button></div></div>'}
 function keypad(f,act){
   var vals=[];if(!f.indoor)vals.push('X');for(var v=10;v>=f.min;v--)vals.push(v);vals.push('M');
   return '<div class="pad">'+vals.map(function(v){var k=v==='X'?'X':(v==='M'?'0':v);return '<button class="k'+k+'" data-act="'+act+'" data-v="'+v+'">'+v+'</button>'}).join('')+'</div>'}
@@ -242,15 +249,22 @@ var ACT={
  mode:function(b){ui.mode=b.dataset.v;DB.set.mode=ui.mode;save();render()},
  key:function(b){keyIn(b.dataset.v)},
  miss:function(){keyIn('M')},
+ goal:function(){var S=curS();if(!S)return;var v=prompt(t('目標点数を入力（空で解除）'),S.goal||'');if(v===null)return;S.goal=Math.max(0,Math.min(maxArrows(S)*10,Math.round(+v)||0));save();render()},
+ calAdd:function(){var d=prompt(t('日付（例 2026-11-03）'),today());if(!d)return;if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.trim())){alert(t('日付は 2026-11-03 の形で入力してください'));return}var p=d.trim().split('-');d=p[0]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[2]).slice(-2);var ti=prompt(t('予定の名前（例 新人戦）'),'');if(!ti)return;DB.events.push({id:uid(),date:d,title:ti,kind:'試合'});save();render()},
+ calDel:function(b){if(confirm(t('この予定を削除しますか？'))){DB.events=DB.events.filter(function(e){return e.id!==b.dataset.id});save();render()}},
+ calMonth:function(b){ui.calM=(ui.calM||0)+(+b.dataset.v);render()},
  zoomReset:function(){ui.tgView=null;render()},
  viewAll:function(){ui.all=!ui.all;render()},
  cellSel:function(b){var S=curS();S.cur={h:b.dataset.h!=null?+b.dataset.h:S.cur.h,e:+b.dataset.e,a:+b.dataset.a};save();render()},
- sortEnd:function(){DB.set.sortEnd=DB.set.sortEnd===false;save();render()},
+ sortEnd:function(){DB.set.sort=!DB.set.sort;save();render()},
  tbl:function(b){ui.tableAll=b.dataset.v==='1';render()},
  clr:function(){var S=curS(),c=S.cur;S.halves[c.h].ends[c.e][c.a]=null;save();render()},
  undo:function(){var S=curS(),best=null;
   S.halves.forEach(function(h,hi){h.ends.forEach(function(en,ei){en.forEach(function(a,ai){if(a&&(!best||(a.t||0)>=(best.a.t||0)))best={a:a,h:hi,e:ei,i:ai}})})});
-  if(!best)return;S.halves[best.h].ends[best.e][best.i]=null;S.cur={h:best.h,e:best.e,a:best.i};save();render()},
+  if(!best)return;var en=S.halves[best.h].ends[best.e];en[best.i]=null;
+  var rest=en.filter(Boolean).sort(function(a,b){return (a.n||0)-(b.n||0)});rest.forEach(function(a,k){a.n=k+1});
+  for(var k=0;k<en.length;k++)en[k]=rest[k]||null;
+  S.cur={h:best.h,e:best.e,a:rest.length};save();render()},
  newDlg:function(){openNew()},
  create:function(){createFromDlg()},
  closeDlg:function(){$('#dlg').close()},
@@ -277,6 +291,7 @@ var ACT={
 };
 document.addEventListener('click',function(e){var b=e.target.closest('[data-act]');if(!b||!ACT[b.dataset.act])return;ACT[b.dataset.act](b,e)});
 document.addEventListener('input',function(e){var x=e.target;
+  if(x.dataset&&x.dataset.gear){var S0=curS();if(S0){S0.gear=S0.gear||{};S0.gear[x.dataset.gear]=x.value;ui.info=true;save()}}
   if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;save();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
   if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake()}});
 document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
@@ -507,6 +522,23 @@ function buildPrint(S){if(!S)return;var el=$('#printArea'),h;
   h+='<p><b>'+t('合計')+' '+st.total+' / '+st.max+'</b>　　'+(st.indoor?t('10の数')+' '+st.tens+'　'+t('9の数')+' '+st.nines:t('10+Xの数')+' '+st.tens+'　'+t('Xの数')+' '+st.xs)+'</p><div class="sig"><div>'+t('競技者署名')+'</div><div>'+t('スコアラー署名')+'</div></div>';
   el.innerHTML=h}
 
+/* ================= 予定（カレンダー） ================= */
+function pd(n){return ('0'+n).slice(-2)}
+function dayDiff(a){var p=a.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]),n=new Date();n=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.round((d-n)/86400000)}
+function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFullYear(),now.getMonth()+(ui.calM||0),1),y=m.getFullYear(),mo=m.getMonth();
+  var up=DB.events.filter(function(e){return dayDiff(e.date)>=0}).sort(function(a,b){return a.date<b.date?-1:1});
+  h+='<div class="card">'+(up.length?'<div class="now" style="margin:0">'+esc(up[0].title)+' <span>'+(dayDiff(up[0].date)===0?t('今日！'):t('あと{0}日',dayDiff(up[0].date)))+'（'+esc(up[0].date)+'）</span></div>':'<p class="note" style="margin:0">'+t('予定はまだありません。試合や大会の日を登録すると、あと何日か表示されます。')+'</p>')+'</div>';
+  var ev={},sc={};DB.events.forEach(function(e){(ev[e.date]=ev[e.date]||[]).push(e)});DB.sessions.forEach(function(x){if(x.type==='score'&&stat(x).n>0)sc[x.date]=(sc[x.date]||0)+1});
+  h+='<div class="card"><div class="row" style="margin:0 0 6px;align-items:center"><button data-act="calMonth" data-v="-1" style="flex:none;min-width:3em">◀</button><b style="text-align:center">'+y+t('年')+(mo+1)+t('月')+'</b><button data-act="calMonth" data-v="1" style="flex:none;min-width:3em">▶</button></div>';
+  h+='<table class="cal"><thead><tr>'+['日','月','火','水','木','金','土'].map(function(w){return '<th>'+t(w)+'</th>'}).join('')+'</tr></thead><tbody>';
+  var first=m.getDay(),days=new Date(y,mo+1,0).getDate(),td=today();
+  for(var r=0;r<6;r++){if(r*7-first+1>days)break;h+='<tr>';for(var c=0;c<7;c++){var dn=r*7+c-first+1;if(dn<1||dn>days){h+='<td></td>';continue}
+    var ds=y+'-'+pd(mo+1)+'-'+pd(dn);h+='<td class="'+(ds===td?'today':'')+'"><div>'+dn+'</div>'+(ev[ds]?'<i class="ev">●</i>':'')+(sc[ds]?'<i class="sc">●</i>':'')+'</td>'}h+='</tr>'}
+  h+='</tbody></table><p class="note"><i class="ev">●</i> '+t('予定')+'　<i class="sc">●</i> '+t('記録した日')+'</p><div class="row"><button class="pri" data-act="calAdd">'+t('＋ 予定を追加')+'</button></div></div>';
+  var all=DB.events.slice().sort(function(a,b){return a.date<b.date?-1:1});
+  if(all.length)h+='<div class="card"><h2>'+t('予定一覧')+'</h2>'+all.map(function(e){var d=dayDiff(e.date);return '<div class="li"><div class="m"><b>'+esc(e.title)+'</b><div>'+esc(e.date)+' ・ '+(d>0?t('あと{0}日',d):d===0?t('今日'):t('終了'))+'</div></div><button data-act="calDel" data-id="'+e.id+'" class="warn">'+t('削除')+'</button></div>'}).join('')+'</div>';
+  el.innerHTML=h}
+
 /* ================= 設定 ================= */
 function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
@@ -527,7 +559,7 @@ function renderSet(){var s=DB.set,h='';
    +'<p class="note">'+t('※三つ目で同じ的に複数の矢が入った場合の「最低得点のみ採点（他はM）」は自動適用していません。審判の判定に従って手で直してください。')+'</p></div>';
   $('#v-set').innerHTML=h}
 $('#file').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(String(r.result).replace(/^﻿/,''));if(!d.sessions)throw 0;
-    var ids={};DB.sessions.forEach(function(s){ids[s.id]=1});var n=0;d.sessions.forEach(function(s){if(!ids[s.id]){DB.sessions.push(s);n++}});save();alert(t('{0}件を追加しました',n));render()}catch(e){alert(t('読み込めませんでした'))}};r.readAsText(f);this.value=''});
+    var ids={};DB.sessions.forEach(function(s){ids[s.id]=1});var n=0;d.sessions.forEach(function(s){if(!ids[s.id]){DB.sessions.push(s);n++}});var eids={};DB.events.forEach(function(e){eids[e.id]=1});(d.events||[]).forEach(function(e){if(!eids[e.id])DB.events.push(e)});save();alert(t('{0}件を追加しました',n));render()}catch(e){alert(t('読み込めませんでした'))}};r.readAsText(f);this.value=''});
 var wl=null;function wake(){try{if(DB.set.wake&&navigator.wakeLock){navigator.wakeLock.request('screen').then(function(l){wl=l}).catch(function(){})}else if(wl){wl.release();wl=null}}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wake()});
 wake();
