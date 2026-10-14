@@ -32,8 +32,10 @@ button:disabled{opacity:.35}
 input,select,textarea{width:100%;padding:.4em .5em;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 label{display:block;font-size:.8rem;color:var(--sub);margin:6px 0 2px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.row>*{flex:1;min-width:4.6em}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;margin-top:8px}
+.row>*{min-width:0;line-height:1.25;overflow-wrap:anywhere}
+.chips.tbar{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.chips.tbar button{min-width:0;line-height:1.2;padding:.15em .3em}
 .sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
 .sum div{background:var(--soft);border-radius:9px;padding:4px 2px}
 .sum small{display:block;color:var(--sub);font-size:.7rem}

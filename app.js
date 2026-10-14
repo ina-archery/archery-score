@@ -192,7 +192,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="now">'+esc(H.d)+'　'+t('{0}エンド目',c.e+1)+'　'+t('{0}本目',c.a+1)+' <span>'+(cell?t('（{0}を書き換え）',lab(cell)):(st.done?t('（全部入力済み）'):''))+'</span></div>';
   var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h;h='';
   h+='<div class="scwrap">';
-  h+='<div class="chips">'+(S.halves.length>1?'<button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button>':'')+'<button class="pri" data-act="undo">'+t('↩ 1本戻す')+'</button>'+(mode==='target'?'<button data-act="zoomReset"'+(zoomed()?'':' disabled')+'>'+t('🔍 拡大を戻す')+'</button>':'')+'</div>';
+  h+='<div class="chips tbar">'+(S.halves.length>1?'<button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button>':'')+'<button class="pri" data-act="undo">'+t('↩ 1本戻す')+'</button>'+(mode==='target'?'<button data-act="zoomReset"'+(zoomed()?'':' disabled')+'>'+t('🔍 拡大を戻す')+'</button>':'')+'</div>';
   h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
