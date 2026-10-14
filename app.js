@@ -289,7 +289,10 @@ var ACT={
  print:function(){buildPrint(curS());setTimeout(function(){window.print()},60)},
  expAll:function(){saveFile('archery_backup_'+today()+'.json',JSON.stringify(DB),'application/json')},
  impAll:function(){$('#file').click()},
- wipe:function(){if(confirm(t('すべての記録を削除します。よろしいですか？'))&&confirm(t('本当に削除しますか？（先にバックアップ保存を推奨）'))){DB.sessions=[];DB.cur=null;save();render()}},
+ resetDlg:function(){var d=$('#dlg');d.className='danger';d.innerHTML='<h2 style="color:var(--warn)">⚠ '+t('リセットしますか？')+'</h2><p>'+t('保存してある記録と予定が、すべて消えます。')+'</p><p class="note">'+t('先に「バックアップ保存」をしておくと、あとで元に戻せます。')+'</p><div class="row"><button class="pri" data-act="resetCancel">'+t('やめる')+'</button><button class="warn" data-act="resetNext">'+t('次へ')+'</button></div>';if(!d.open)d.showModal()},
+ resetNext:function(){var d=$('#dlg');d.innerHTML='<h2 style="color:var(--warn)">⚠⚠ '+t('本当にリセットしますか？')+'</h2><p><b>'+t('記録 {0}件・予定 {1}件 が消えます。元に戻せません。',DB.sessions.length,DB.events.length)+'</b></p><div class="row"><button class="pri" data-act="resetCancel">'+t('やめる')+'</button><button class="warn" data-act="resetGo">'+t('完全にリセットする')+'</button></div>'},
+ resetCancel:function(){var d=$('#dlg');d.close();d.className=''},
+ resetGo:function(){DB.sessions=[];DB.events=[];DB.cur=null;ui.tgView=null;ui.calSel=null;save();var d=$('#dlg');d.close();d.className='';flash(t('リセットしました'));show('rec')},
  anaScope:function(b){ui.anaScope=b.dataset.v;render()},
  mKey:function(b){mKey(b.dataset.v)},
  mCell:function(b){var S=curS();S.cur={g:b.dataset.g,s:+b.dataset.s,side:b.dataset.side,a:+b.dataset.a};save();render()},
@@ -452,7 +455,7 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
      +'<label>'+t('1セット（1エンド）の射数')+'</label><select id="d_mper"><option value="">'+t('形式の既定（個人3・団体6・ミックス4）')+'</option>'+[3,4,6].map(function(n){return '<option value="'+n+'"'+(String(o.mper)===String(n)?' selected':'')+'>'+t('{0}射',n)+'</option>'}).join('')+'</select>'
      +'<label>'+t('相手の名前（団体はチーム名）')+'</label><input id="d_opp" value="'+esc(o.opp||'')+'">'}
   h+='<div class="row"><button data-act="closeDlg">'+t('キャンセル')+'</button><button class="pri" data-act="create">'+t('記録を始める')+'</button></div>';
-  d.innerHTML=h;if(!d.open)d.showModal()}
+  d.className='';d.innerHTML=h;if(!d.open)d.showModal()}
 document.addEventListener('rr',function(){ui.dlgVals=readDlg();openNew()});
 function readDlg(){var g=function(i){var e=$('#'+i);return e?e.value:undefined};
   return {name:g('d_name'),date:g('d_date'),place:g('d_place'),round:g('d_round'),face:g('d_face'),per:(g('d_per')==='m'?(g('d_perm')||'m'):g('d_per')),perm:g('d_perm'),dist:g('d_dist'),arrows:g('d_arrows'),halves:g('d_halves'),bow:g('d_bow'),unit:g('d_unit'),mper:g('d_mper'),sys:g('d_sys'),kind:(g('d_unit')?mkind(g('d_unit'),g('d_sys')):undefined),opp:g('d_opp')}}
@@ -597,10 +600,11 @@ function renderSet(){var s=DB.set,h='';
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="wake" '+(s.wake?'checked':'')+'> '+t('記録中は画面を消さない（対応ブラウザ）')+'</label></div>';
   h+='<div class="card"><h2>'+t('データ')+'</h2><p class="note">'+t('記録はこの端末に保存されます。機種変更・データ削除に備え、ときどきバックアップを保存してください。')+'</p>'
-   +'<div class="row"><button data-act="expAll">'+t('バックアップ保存')+'</button><button data-act="impAll">'+t('バックアップを読み込む')+'</button></div><div class="row"><button class="warn" data-act="wipe">'+t('全記録を削除')+'</button></div>'
+   +'<div class="row"><button data-act="expAll">'+t('バックアップ保存')+'</button><button data-act="impAll">'+t('バックアップを読み込む')+'</button></div>'
    +'<p class="note">'+t('記録数: {0}件',DB.sessions.length)+'</p></div>';
   h+='<div class="card"><h2>'+t('ルールの反映（アーチェリー競技規則）')+'</h2><ul class="note" style="padding-left:1.2em;margin:0"><li>'+t('矢がラインに触れていれば高い得点')+'</li><li>'+t('X＝インナー10。同点は アウトドア：X数→10数、インドア：10数→9数')+'</li><li>'+t('6リング標的面は5点未満、三つ目は6点未満、的の外はM')+'</li><li>'+t('コンパウンドのインドアは内側の小さい輪が10点')+'</li><li>'+t('エンド完了後は高い得点順に記入（設定で切替）')+'</li><li>'+t('対戦：セット制(2/1/0点)と累計制、シュートオフ対応')+'</li></ul>'
    +'<p class="note">'+t('※三つ目で同じ的に複数の矢が入った場合の「最低得点のみ採点（他はM）」は自動適用していません。審判の判定に従って手で直してください。')+'</p></div>';
+  h+='<div class="card" style="margin-top:56px;border:2px solid var(--warn)"><h2 style="color:var(--warn)">'+t('リセット')+'</h2><p class="note">'+t('記録と予定をすべて消します（設定は残ります）。押しても、すぐには消えません。確認が2回出ます。')+'</p><div class="row"><button class="warn" data-act="resetDlg">'+t('リセットする…')+'</button></div></div><div style="height:40px"></div>';
   $('#v-set').innerHTML=h}
 $('#file').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(String(r.result).replace(/^﻿/,''));if(!d.sessions)throw 0;
     var ids={};DB.sessions.forEach(function(s){ids[s.id]=1});var n=0;d.sessions.forEach(function(s){if(!ids[s.id]){DB.sessions.push(s);n++}});var eids={};DB.events.forEach(function(e){eids[e.id]=1});(d.events||[]).forEach(function(e){if(!eids[e.id])DB.events.push(e)});save();alert(t('{0}件を追加しました',n));render()}catch(e){alert(t('読み込めませんでした'))}};r.readAsText(f);this.value=''});
