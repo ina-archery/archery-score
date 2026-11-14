@@ -18,7 +18,7 @@ window.I18N.en={
 '三つ目は押した位置に近い的が対象です。':'On 3-spot faces, the nearest spot is used.',
 '的の外を指して離すとミスになります。':'Lift outside the target to cancel.',
 'ミス (M)':'Miss (M)','1本戻す':'Undo','選んだ矢を消す':'Clear arrow',
-'表示：全エンド':'Show: all ends','表示：今のエンドだけ':'Show: this end',
+'表と的を左右に並べる':'Side by side','表示：全エンド':'Show: all ends','表示：今のエンドだけ':'Show: this end',
 'エンド':'End','{0}本ずつ':'{0} arrows each','全{0}本':'All {0} arrows','計':'Sum','累計':'Total','{0}回目 ':'Part {0} ','小計':'Subtotal',
 '記録の情報・メモ':'Info and notes','氏名':'Name','日付':'Date','大会名・場所':'Event / place','天候・風':'Weather / wind',
 '例: 晴れ・右から3m':'e.g. Sunny, wind 3m from right','弓種':'Bow type','メモ（調子・反省・セッティング）':'Notes (form, review, setup)',

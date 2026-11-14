@@ -190,24 +190,31 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   if(S.halves.length>1){h+='<div class="tabs">'+S.halves.map(function(hh,i){return '<button class="'+(c.h===i?'on':'')+'" data-act="tab" data-v="'+i+'">'+t('{0}回目 {1}',i+1,esc(hh.d))+'<br><small>'+t('{0}点',st.half[i].sum)+'</small></button>'}).join('')+'</div>'}
   var cell=H.ends[c.e][c.a];
   h+='<div class="now">'+esc(H.d)+'　'+t('{0}エンド目',c.e+1)+'　'+t('{0}本目',c.a+1)+' <span>'+(cell?t('（{0}を書き換え）',lab(cell)):(st.done?t('（全部入力済み）'):''))+'</span></div>';
-  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h;h='';
+  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h,side=(mode==='target'&&!!DB.set.side),ch=side&&per>3?3:per,nr=Math.ceil(per/ch);h='';
   h+='<div class="scwrap">';
   h+='<div class="chips tbar">'+(S.halves.length>1?'<button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button>':'')+'<button class="pri" data-act="undo">'+t('↩ 1本戻す')+'</button>'+(mode==='target'?'<button data-act="zoomReset"'+(zoomed()?'':' disabled')+'>'+t('🔍 拡大を戻す')+'</button>':'')+'</div>';
   h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
-    h+='<table class="'+(per>8?'many':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:11%">'+new Array(per+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
-    for(var i=1;i<=per;i++)h+='<th>'+i+'</th>';h+='<th>'+t('計')+'</th><th>'+t('累計')+'</th></tr></thead><tbody>';
+    h+='<table class="'+(per>8?'many':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:'+(side?'12%':'11%')+'">'+new Array(ch+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
+    for(var i=1;i<=ch;i++){var lb=[];for(var r=0;r<nr;r++)lb.push(i+r*ch);h+='<th>'+lb.join('/')+'</th>'}h+='<th>'+t('計')+'</th><th>'+t('累計')+'</th></tr></thead><tbody>';
     HH.ends.forEach(function(en,e){var q=endTotal(en);run+=q;var any=en.some(Boolean);
-      h+='<tr><th>'+(e+1)+'</th>'+en.map(function(a,i){return '<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}).join('')+new Array(per-en.length+1).join('<td></td>')+'<td class="tot">'+(any?q:'')+'</td><td class="tot">'+(any?run:'')+'</td></tr>'});
-    h+='</tbody><tfoot><tr><th colspan="'+(per+1)+'">'+(S.halves.length>1?t('{0}回目 ',hi+1):'')+t('小計')+'　'+tens(st,hs)+'</th><td colspan="2">'+hs.sum+'</td></tr>';
-    if(S.halves.length>1&&(!showAll||hi===list[list.length-1]))h+='<tr><th colspan="'+(per+1)+'">'+t('合計')+'</th><td colspan="2">'+st.total+'</td></tr>';
+      for(var r=0;r<nr;r++){
+        h+='<tr>'+(r===0?'<th'+(nr>1?' rowspan="'+nr+'"':'')+'>'+(e+1)+'</th>':'');
+        for(var k=0;k<ch;k++){var i=r*ch+k;
+          if(i>=en.length){h+='<td></td>';continue}
+          var a=en[i];h+='<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}
+        if(r===0){var rs=nr>1?' rowspan="'+nr+'"':'';h+='<td class="tot"'+rs+'>'+(any?q:'')+'</td><td class="tot"'+rs+'>'+(any?run:'')+'</td>'}
+        h+='</tr>'}});
+    h+='</tbody><tfoot><tr><th colspan="'+(ch+1)+'">'+(S.halves.length>1?t('{0}回目 ',hi+1):'')+t('小計')+'　'+tens(st,hs)+'</th><td colspan="2">'+hs.sum+'</td></tr>';
+    if(S.halves.length>1&&(!showAll||hi===list[list.length-1]))h+='<tr><th colspan="'+(ch+1)+'">'+t('合計')+'</th><td colspan="2">'+st.total+'</td></tr>';
     h+='</tfoot></table>'});
   h+='</div>';var tb=h;h=hMain;
-  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button></div>';
+  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button>'+(mode==='target'?'<button class="'+(side?'on':'')+'" data-act="side">'+t('表と的を左右に並べる')+'</button>':'')+'</div>';
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
-    h+='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>'+tb
+    var tgh='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>';
+    var ti=tb.indexOf('<table');h+=(side?tb.slice(0,ti)+'</div><div class="sbs"><div class="scwrap">'+tb.slice(ti)+tgh+'</div>':tgh+tb)
       +'<p class="note">'+t('的を押すと丸が出ます。そのまま押さえて指を動かすと、丸を動かせます（点数が真上に出ます）。指を離した位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。すぐに指を動かすと画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
   else{h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
@@ -248,6 +255,7 @@ var ACT={
  nav:function(b){show(b.dataset.v)},
  go:function(b){show(b.dataset.v)},
  tab:function(b){var S=curS(),h=+b.dataset.v,n=nextEmpty(S,h,0,0);S.cur=(n&&n.h===h)?n:{h:h,e:0,a:0};ui.tgView=null;save();render()},
+ side:function(){DB.set.side=!DB.set.side;ui.tgView=null;save();render()},
  mode:function(b){ui.mode=b.dataset.v;DB.set.mode=ui.mode;save();render()},
  key:function(b){keyIn(b.dataset.v)},
  miss:function(){keyIn('M')},
