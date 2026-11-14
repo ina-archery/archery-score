@@ -604,8 +604,7 @@ function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
   h+='<div class="card"><h2>'+t('基本設定')+'</h2><label>'+t('氏名（新しい記録の初期値）')+'</label><input data-set="name" value="'+esc(s.name)+'">'
    +'<label>'+t('弓種の初期値')+'</label><select data-set="bow">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+(s.bow===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'
-   +'<label>'+t('矢の太さ（mm）— ライン接触の判定に使います（矢の外径。ライン上は高い方の得点）')+'</label><input type="number" step="0.1" min="3" max="10" data-set="arrowMm" value="'+s.arrowMm+'">'
-   +'<p class="note">'+t('目安: カーボン外径 約5.5〜6.0mm（新しい記録から反映）')+'</p></div>';
+   +'</div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
    +'<label>'+t('ライン判定の基準（線に触れていたら高い方の得点）')+'</label><select data-set="lineBasis">'+[['circle',t('画面の矢の丸の大きさ（丸が線に触れたら）')],['real',t('実際の矢の太さ（下の設定を使う）')]].map(function(z){return '<option value="'+z[0]+'"'+((s.lineBasis||'circle')===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
    +'<label>'+t('実際の矢の太さを使うときのゆるさ（矢の太さ×この倍率）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
