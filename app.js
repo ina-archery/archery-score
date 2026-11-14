@@ -310,7 +310,7 @@ document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e
 
 /* ----- 的タッチ入力（2本指で拡大・タップで入力） ----- */
 var tp={p:{},svg:null,moved:false,pinch:false,drag:false,timer:null};
-function arR(S,g){return DB.set.lineBasis==='real'?(S.arrowMm||5.5)/20*(+DB.set.cursorX||1):markR(g)*0.8}
+function arR(S,g){return markR(g)*0.8}
 function markR(g){return g.R*0.034*(g.f.spots>1?1.3:1)}
 function placeHit(){var o=document.getElementById('lasthit');if(o)o.remove()}
 function svgPt(ev,svg){var q=svg.createSVGPoint();q.x=ev.clientX;q.y=ev.clientY;var r=q.matrixTransform(svg.getScreenCTM().inverse());return {x:r.x,y:r.y}}
@@ -606,8 +606,6 @@ function renderSet(){var s=DB.set,h='';
    +'<label>'+t('弓種の初期値')+'</label><select data-set="bow">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+(s.bow===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'
    +'</div>';
   h+='<div class="card"><h2>'+t('入力のしかた')+'</h2>'
-   +'<label>'+t('ライン判定の基準（線に触れていたら高い方の得点）')+'</label><select data-set="lineBasis">'+[['circle',t('画面の矢の丸の大きさ（丸が線に触れたら）')],['real',t('実際の矢の太さ（下の設定を使う）')]].map(function(z){return '<option value="'+z[0]+'"'+((s.lineBasis||'circle')===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
-   +'<label>'+t('実際の矢の太さを使うときのゆるさ（矢の太さ×この倍率）')+'</label><select data-set="cursorX">'+[[1,t('厳密（矢の太さのまま）')],[2,t('少しゆるく（2倍）')],[3,t('ゆるく（3倍）')]].map(function(z){return '<option value="'+z[0]+'"'+(+s.cursorX===z[0]?' selected':'')+'>'+z[1]+'</option>'}).join('')+'</select>'
    +'<p class="note">'+t('的は、2本指で拡大・移動してからタップすると細かく狙えます。すぐに指を動かすと画面がスクロールします。押さえたまま指を動かすと、丸を動かして位置を合わせられます。')+'</p>'
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
