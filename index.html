@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Archery">
 <style>
-:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--accent-d:#4cc27e;--accent2:#1d6fd8;--sel:#e67e00;--warn:#c0392b;--soft:#e8efeb}
+:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--accent-d:#4cc27e;--on:#fff;--accent2:#1d6fd8;--sel:#e67e00;--warn:#c0392b;--soft:#e8efeb}
 @media (prefers-color-scheme:dark){:root{--bg:#101412;--card:#1a201d;--text:#e8eeea;--sub:#9aa8a1;--line:#2f3a35;--accent:#4cc27e;--accent2:#5aa2f5;--soft:#242d29}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -25,8 +25,8 @@ main{max-width:680px;margin:0 auto}
 h2{font-size:1rem;margin:0 0 6px}
 button,select,input,textarea{font:inherit;color:var(--text)}
 button{cursor:pointer;border:1px solid var(--accent);background:var(--card);color:var(--accent);border-radius:8px;padding:.25em .5em;font-size:.85rem;touch-action:manipulation;min-height:34px}
-button.on{background:var(--accent);color:#fff}
-button.pri{background:var(--accent);color:#fff;font-weight:bold}
+button.on{background:var(--accent);color:var(--on)}
+button.pri{background:var(--accent);color:var(--on);font-weight:bold}
 button.warn{border-color:var(--warn);color:var(--warn)}
 button:disabled{opacity:.35}
 input,select,textarea{width:100%;padding:.4em .5em;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
@@ -40,7 +40,7 @@ label{display:block;font-size:.8rem;color:var(--sub);margin:6px 0 2px}
 .sum div{background:var(--soft);border-radius:9px;padding:4px 2px}
 .sum small{display:block;color:var(--sub);font-size:.7rem}
 .sum b{font-size:1.15rem}
-.sum .grand{grid-column:1/5;background:var(--accent);color:#fff;display:flex;align-items:baseline;justify-content:center;gap:8px}
+.sum .grand{grid-column:1/5;background:var(--accent);color:var(--on);display:flex;align-items:baseline;justify-content:center;gap:8px}
 .sum .grand b{font-size:2rem}
 .sum .grand small{display:inline;color:#dff;font-size:.85rem}
 .tabs{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto}
@@ -95,8 +95,8 @@ dialog::backdrop{background:#0008}
 .res{font-size:1.3rem;font-weight:bold;text-align:center;padding:6px;border-radius:9px;background:var(--soft);margin-bottom:8px}
 table.cal td{height:3em;vertical-align:top;padding:2px;font-size:.85rem}table.cal td{cursor:pointer}table.cal td.selday{background:var(--soft)}table.cal td.today{outline:2px solid var(--sel);outline-offset:-2px}table.cal i{font-style:normal;font-size:.7rem}i.ev{color:var(--warn)}i.sc{color:var(--accent)}
 #printArea{display:none}
-.flash{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;pointer-events:none}
-#toast{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;cursor:pointer}
+.flash{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:var(--on);border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;pointer-events:none}
+#toast{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:var(--on);border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;cursor:pointer}
 @media print{
   body{padding:0;background:#fff;color:#000}
   body>*:not(#printArea){display:none!important}
