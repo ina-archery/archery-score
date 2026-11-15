@@ -371,4 +371,5 @@ window.I18N.it={
 '曜:木':'Gi',
 '曜:金':'Ve',
 '曜:土':'Sa',
+'点数を的の色で色分けする（表と点数ボタン）':'Colora i punteggi come il facciale (tabella e tasti punteggio)',
 };

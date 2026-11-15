@@ -371,4 +371,5 @@ window.I18N.de={
 '曜:木':'Do',
 '曜:金':'Fr',
 '曜:土':'Sa',
+'点数を的の色で色分けする（表と点数ボタン）':'Punkte wie die Scheibe einfärben (Tabelle und Punktetasten)',
 };

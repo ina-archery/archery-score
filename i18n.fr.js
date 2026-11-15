@@ -371,4 +371,5 @@ window.I18N.fr={
 '曜:木':'Je',
 '曜:金':'Ve',
 '曜:土':'Sa',
+'点数を的の色で色分けする（表と点数ボタン）':'Colorer les scores comme le blason (tableau et touches de score)',
 };

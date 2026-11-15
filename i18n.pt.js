@@ -371,4 +371,5 @@ window.I18N.pt={
 '曜:木':'Qui',
 '曜:金':'Sex',
 '曜:土':'Sáb',
+'点数を的の色で色分けする（表と点数ボタン）':'Colorir as pontuações como o alvo (tabela e teclas de pontuação)',
 };

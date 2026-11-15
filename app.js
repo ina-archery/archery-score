@@ -85,7 +85,7 @@ function applyTheme(){var k=THEMES[DB.set.theme]?DB.set.theme:'green',T=THEMES[k
 applyTheme();
 var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',histPur:'all',anaPur:'all',dlgKind:'score'};
 var CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
-function defSet(){return {cursorX:2,zoom:1.5,lang:'auto',name:'',arrowMm:5.5,offset:true,sort:true,vib:true,wake:false,bow:'recurve',mode:'target'}}
+function defSet(){return {colorScore:true,cursorX:2,zoom:1.5,lang:'auto',name:'',arrowMm:5.5,offset:true,sort:true,vib:true,wake:false,bow:'recurve',mode:'target'}}
 function load(){var d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
   if(!d||!d.sessions)d={v:1,sessions:[],cur:null,set:defSet()};
   if(!d.events)d.events=[];
@@ -157,7 +157,7 @@ function oppName(S){return S.opp||t('相手')}
 function meName(S){return S.name||t('自分')}
 
 /* ================= 画面切替 ================= */
-function applyStatic(){document.documentElement.lang=({zhs:'zh-Hans',zht:'zh-Hant'})[LANG]||LANG;document.title=t('アーチェリー スコア記録');
+function applyStatic(){document.body.classList.toggle('nocolor',DB.set.colorScore===false);document.documentElement.lang=({zhs:'zh-Hans',zht:'zh-Hant'})[LANG]||LANG;document.title=t('アーチェリー スコア記録');
   var l=document.querySelectorAll('[data-i18n]');for(var i=0;i<l.length;i++)l[i].textContent=t(l[i].getAttribute('data-i18n'))}
 function show(v){ui.view=v;['rec','hist','ana','cal','set','help'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');var n=$('#n-'+k);if(n)n.className=(k===v||(v==='help'&&k==='set')?'on':'')});render();if(v==='help')window.scrollTo(0,0)}
 function render(){
@@ -207,11 +207,11 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
   list.forEach(function(hi){var HH=S.halves[hi],hs=st.half[hi];
     if(!showAll)run=0;
-    h+='<table class="'+(per>8?'many':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:'+(side?'12%':'11%')+'">'+new Array(ch+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
+    h+='<table class="'+(per>8?'many':'')+(nr>1?' endsep':'')+'"'+(hi!==list[0]?' style="margin-top:10px"':'')+'><colgroup><col style="width:'+(side?'12%':'11%')+'">'+new Array(ch+1).join('<col>')+'<col style="width:13%"><col style="width:14%"></colgroup><thead><tr><th>'+(showAll?esc(HH.d)+'<br>'+(hi+1):t('エンド'))+'</th>';
     for(var i=1;i<=ch;i++){var lb=[];for(var r=0;r<nr;r++)lb.push(i+r*ch);h+='<th>'+lb.join('/')+'</th>'}h+='<th>'+t('計')+'</th><th>'+t('累計')+'</th></tr></thead><tbody>';
     HH.ends.forEach(function(en,e){var q=endTotal(en);run+=q;var any=en.some(Boolean);
       for(var r=0;r<nr;r++){
-        h+='<tr>'+(r===0?'<th'+(nr>1?' rowspan="'+nr+'"':'')+'>'+(e+1)+'</th>':'');
+        h+='<tr'+(r===0?' class="es"':'')+'>'+(r===0?'<th'+(nr>1?' rowspan="'+nr+'"':'')+'>'+(e+1)+'</th>':'');
         for(var k=0;k<ch;k++){var i=r*ch+k;
           if(i>=en.length){h+='<td></td>';continue}
           var a=en[i];h+='<td class="c '+cls(a)+((c.h===hi&&c.e===e&&c.a===i)?' sel':'')+'" data-act="cellSel" data-h="'+hi+'" data-e="'+e+'" data-a="'+i+'">'+lab(a)+'</td>'}
@@ -328,7 +328,7 @@ document.addEventListener('input',function(e){var x=e.target;
   if(x.dataset&&x.dataset.arrc&&ui.anaSelA){ui.anaSelA.c=x.value;save();return}
   if(x.dataset&&x.dataset.gear){var S0=curS();if(S0){S0.gear=S0.gear||{};S0.gear[x.dataset.gear]=x.value;ui.info=true;save()}}
   if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;save();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
-  if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake()}});
+  if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake();if(k==='colorScore')render()}});
 document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
 document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e.target.open},true);
 
@@ -648,7 +648,8 @@ function renderSet(){var s=DB.set,h='';
    +'<label><input type="checkbox" style="width:auto" data-set="sort" '+(s.sort?'checked':'')+'> '+t('エンド完了時に高い得点順へ並べ替える（スコアカードの記入ルール）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="arrowNo" '+(s.arrowNo?'checked':'')+'> '+t('分析で矢の番号（何射目か）を表示する（打った順に入力する人向け。高い点から入力する人はオフのまま）')+'</label>'
    +'<label><input type="checkbox" style="width:auto" data-set="vib" '+(s.vib?'checked':'')+'> '+t('入力時に振動')+'</label>'
-   +'<label><input type="checkbox" style="width:auto" data-set="wake" '+(s.wake?'checked':'')+'> '+t('記録中は画面を消さない（対応ブラウザ）')+'</label></div>';
+   +'<label><input type="checkbox" style="width:auto" data-set="wake" '+(s.wake?'checked':'')+'> '+t('記録中は画面を消さない（対応ブラウザ）')+'</label>'
+   +'<label><input type="checkbox" style="width:auto" data-set="colorScore" '+(s.colorScore!==false?'checked':'')+'> '+t('点数を的の色で色分けする（表と点数ボタン）')+'</label></div>';
   h+='<div class="card"><h2>'+t('データ')+'</h2><p class="note">'+t('記録はこの端末に保存されます。機種変更・データ削除に備え、ときどきバックアップを保存してください。')+'</p>'
    +'<div class="row"><button data-act="expAll">'+t('バックアップ保存')+'</button><button data-act="impAll">'+t('バックアップを読み込む')+'</button></div>'
    +'<p class="note">'+t('記録数: {0}件',DB.sessions.length)+'</p></div>';

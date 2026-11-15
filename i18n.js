@@ -375,4 +375,5 @@ window.I18N.en={
 '曜:木':'Th',
 '曜:金':'Fr',
 '曜:土':'Sa',
+'点数を的の色で色分けする（表と点数ボタン）':'Color scores like the target (table and score keys)',
 };
