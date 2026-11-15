@@ -262,9 +262,7 @@ function keyIn(v){var S=curS();if(!S)return;var a;
   putArrow(S,a)}
 var ACT={
  nav:function(b){show(b.dataset.v)},
- helpToggle:function(b){var k=b.dataset.k;ui.helpClosed=ui.helpClosed||{};if(ui.helpClosed[k])delete ui.helpClosed[k];else ui.helpClosed[k]=1;var y=window.scrollY;render();window.scrollTo(0,y)},
- helpAsk:function(b){ui.helpSeq=(ui.helpSeq||0)+1;ui.helpLog=(ui.helpLog||[]).concat({id:b.dataset.id,k:ui.helpSeq}).slice(-6);ui.helpTyping=true;render();scrollHelp();setTimeout(function(){ui.helpTyping=false;if(ui.view==='help'){render();scrollHelp()}},450)},
- helpClear:function(){ui.helpLog=[];render()},
+ helpOpen:function(b){var id=b.dataset.id;ui.helpOpen=(ui.helpOpen===id?null:id);render();var e=document.getElementById('hq_'+id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},
  go:function(b){show(b.dataset.v)},
  tab:function(b){var S=curS(),h=+b.dataset.v,n=nextEmpty(S,h,0,0);S.cur=(n&&n.h===h)?n:{h:h,e:0,a:0};ui.tgView=null;save();render()},
  side:function(){DB.set.side=!DB.set.side;ui.tgView=null;save();render()},
@@ -628,18 +626,14 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
   el.innerHTML=h}
 
 /* ================= 設定 ================= */
-function scrollHelp(){var e=document.getElementById('helpLast');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})}
-function helpBub(c,x){return '<div class="bub '+c+'">'+x+'</div>'}
-function helpAnswer(Q,k){return '<div class="bub ai tapclose" data-act="helpToggle" data-k="'+k+'">'+Q.steps.map(function(st,i){return '<div class="hs"><span class="n">'+(i+1)+'</span><div><b>'+st.t+'</b>'+(st.f?'<div class="fig">'+st.f+'</div>':'')+'</div></div>'}).join('')+(Q.tip?'<p class="note">💡 '+Q.tip+'</p>':'')+'<p class="note" style="text-align:center">▲ '+t('タップで閉じる')+'</p></div>'}
-function renderHelp(){var el=$('#v-help'),H=window.HELP||{qs:[],greet:''},log=ui.helpLog||[],h='<div class="helpchat">';
-  h+='<div class="row" style="margin:0 0 8px"><button data-act="nav" data-v="set">← '+t('設定にもどる')+'</button>'+(log.length?'<button data-act="helpClear">'+t('会話を消す')+'</button>':'')+'</div>';
-  h+=helpBub('ai',H.greet);
-  log.forEach(function(e,i){var Q=H.qs.filter(function(x){return x.id===e.id})[0];if(!Q)return;var last=(i===log.length-1),closed=!!(ui.helpClosed&&ui.helpClosed[e.k]);
-    h+='<div class="bub me tapq" data-act="helpToggle" data-k="'+e.k+'"'+(last?' id="helpLast"':'')+'>'+(closed?'▸ ':'▾ ')+Q.icon+' '+Q.q+'</div>';
-    if(closed)return;
-    h+=(last&&ui.helpTyping)?'<div class="bub ai"><span class="typing"><i></i><i></i><i></i></span></div>':helpAnswer(Q,e.k)});
-  if(!ui.helpTyping){h+='<div class="bub ai"><b>'+(log.length?'ほかに知りたいことは？':'どれが知りたい？')+'</b><div class="hq">'+H.qs.map(function(Q){return '<button data-act="helpAsk" data-id="'+Q.id+'">'+Q.icon+' '+Q.q+'</button>'}).join('')+(H.formUrl?'<a class="hqlink" href="'+H.formUrl+'" target="_blank" rel="noopener">💬 見つからないとき・要望を送る</a>':'')+'</div></div>'}
-  el.innerHTML=h+'</div>'}
+function helpAnswer(Q){return '<div class="helpans">'+Q.steps.map(function(st,i){return '<div class="hs"><span class="n">'+(i+1)+'</span><div><b>'+st.t+'</b>'+(st.f?'<div class="fig">'+st.f+'</div>':'')+'</div></div>'}).join('')+(Q.tip?'<p class="note">💡 '+Q.tip+'</p>':'')+'</div>'}
+function renderHelp(){var el=$('#v-help'),H=window.HELP||{qs:[],greet:''},open=ui.helpOpen,h='<div class="helpchat">';
+  h+='<div class="row" style="margin:0 0 8px"><button data-act="nav" data-v="set">← '+t('設定にもどる')+'</button></div>';
+  h+='<div class="bub ai">'+H.greet+'</div><div class="hlist">';
+  H.qs.forEach(function(Q){var on=(open===Q.id);
+    h+='<div class="hitem'+(on?' on':'')+'" id="hq_'+Q.id+'"><button class="hqb" data-act="helpOpen" data-id="'+Q.id+'"><span>'+Q.icon+' '+Q.q+'</span><span class="chev">'+(on?'▾':'▸')+'</span></button>'+(on?helpAnswer(Q):'')+'</div>'});
+  if(H.formUrl)h+='<a class="hqlink" href="'+H.formUrl+'" target="_blank" rel="noopener">💬 見つからないとき・要望を送る</a>';
+  el.innerHTML=h+'</div></div>'}
 function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><button class="pri" data-act="nav" data-v="help" style="width:100%;min-height:44px;font-size:1rem">📖 '+t('使い方・よくある質問')+'</button></div>';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
