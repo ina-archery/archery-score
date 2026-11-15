@@ -78,7 +78,7 @@ LANG=pickLang(DB.set.lang);
 var THEMES={green:['グリーン','#14532d','#4cc27e'],teal:['ティール','#0f766e','#4fd1c5'],blue:['ブルー','#1d4ed8','#6ea8fe'],navy:['ネイビー','#1e3a5f','#7aa7e0'],purple:['パープル','#6d28d9','#b794f6'],pink:['ピンク','#be185d','#f472b6'],red:['レッド','#b3261e','#ff8a80'],orange:['オレンジ','#c2570c','#ffa94d'],black:['ブラック','#2b2b2b','#8a948f']};
 function applyTheme(){var k=THEMES[DB.set.theme]?DB.set.theme:'green',T=THEMES[k],st=document.getElementById('themecss');
   if(!st){st=document.createElement('style');st.id='themecss';document.head.appendChild(st)}
-  st.textContent=':root{--accent:'+T[1]+'}@media (prefers-color-scheme:dark){:root{--accent:'+T[2]+'}}';
+  st.textContent=':root{--accent:'+T[1]+';--accent-d:'+T[2]+'}@media (prefers-color-scheme:dark){:root{--accent:'+T[2]+'}}';
   var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',T[1])}
 applyTheme();
 var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',histPur:'all',anaPur:'all',dlgKind:'score'};

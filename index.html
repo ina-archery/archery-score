@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Archery">
 <style>
-:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--accent2:#1d6fd8;--sel:#e67e00;--warn:#c0392b;--soft:#e8efeb}
+:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--accent-d:#4cc27e;--accent2:#1d6fd8;--sel:#e67e00;--warn:#c0392b;--soft:#e8efeb}
 @media (prefers-color-scheme:dark){:root{--bg:#101412;--card:#1a201d;--text:#e8eeea;--sub:#9aa8a1;--line:#2f3a35;--accent:#4cc27e;--accent2:#5aa2f5;--soft:#242d29}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -74,10 +74,10 @@ tfoot td,tfoot th{background:var(--soft);font-weight:bold}
 .li button{min-height:30px;padding:.15em .5em;flex:none}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chips button{min-height:30px;padding:.15em .6em}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:20}
+nav{position:fixed;left:0;right:0;bottom:0;background:#1a201d;border-top:1px solid #2f3a35;display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:20}
 nav button i{font-style:normal}
-nav button{flex:1;border:0;border-radius:0;background:transparent;color:var(--sub);min-height:50px;font-size:.78rem;line-height:1.2}
-nav button.on{color:var(--accent);font-weight:bold;background:var(--soft)}
+nav button{flex:1;border:0;border-radius:0;background:transparent;color:#9aa8a1;min-height:50px;font-size:.78rem;line-height:1.2}
+nav button.on{color:var(--accent-d);font-weight:bold;background:#242d29}
 nav button span{display:block;font-size:1.3rem}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);width:min(94vw,520px);padding:14px}
 dialog.danger{border:4px solid var(--warn)}
