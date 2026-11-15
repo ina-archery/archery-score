@@ -16,7 +16,7 @@ var f={
 };
 window.HELP={
   greet:'こんにちは！ &#127919; 使い方で困ったことを選んでね。図で説明するよ。',
-  formUrl:'',
+  formUrl:'https://docs.google.com/forms/d/e/1FAIpQLSdA_0P6pgH7jp4mR0EoKVj2y-vLKTBp_zdMDlYZDshUU1DYdQ/viewform',
   qs:[
     {id:'start',icon:'🎯',q:'記録のはじめかた',steps:[
       {t:'「＋ 新しい記録」をタップ',f:f.btn('＋ 新しい記録',{on:1,tap:1})},
