@@ -157,6 +157,7 @@ function oppName(S){return S.opp||t('相手')}
 function meName(S){return S.name||t('自分')}
 
 /* ================= 画面切替 ================= */
+function isLand(){try{return window.matchMedia('(orientation:landscape) and (max-height:600px)').matches}catch(e){return false}}
 function applyStatic(){document.body.classList.toggle('nocolor',DB.set.colorScore===false);document.documentElement.lang=({zhs:'zh-Hans',zht:'zh-Hant'})[LANG]||LANG;document.title=t('アーチェリー スコア記録');
   var l=document.querySelectorAll('[data-i18n]');for(var i=0;i<l.length;i++)l[i].textContent=t(l[i].getAttribute('data-i18n'))}
 function show(v){ui.view=v;['rec','hist','ana','cal','set','help'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');var n=$('#n-'+k);if(n)n.className=(k===v||(v==='help'&&k==='set')?'on':'')});render();if(v==='help')window.scrollTo(0,0)}
@@ -201,7 +202,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   if(S.halves.length>1){h+='<div class="tabs">'+S.halves.map(function(hh,i){return '<button class="'+(c.h===i?'on':'')+'" data-act="tab" data-v="'+i+'">'+t('{0}回目 {1}',i+1,esc(hh.d))+'<br><small>'+t('{0}点',st.half[i].sum)+'</small></button>'}).join('')+'</div>'}
   var cell=H.ends[c.e][c.a];
   h+='<div class="now">'+esc(H.d)+'　'+t('{0}エンド目',c.e+1)+'　'+t('{0}本目',c.a+1)+' <span>'+(cell?t('（{0}を書き換え）',lab(cell)):(st.done?t('（全部入力済み）'):''))+'</span></div>';
-  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h,side=(mode==='target'&&!!DB.set.side),ch=side&&per>3?3:per,nr=Math.ceil(per/ch);h='';
+  var perHalf=H.ends.length*per,showAll=ui.tableAll&&S.halves.length>1,list=showAll?S.halves.map(function(_,i){return i}):[c.h],run=0,hMain=h,land=isLand(),side=(mode==='target'&&(!!DB.set.side||land)),ch=side&&per>3?3:per,nr=Math.ceil(per/ch);h='';
   h+='<div class="scwrap">';
   h+='<div class="chips tbar">'+(S.halves.length>1?'<button class="'+(!showAll?'on':'')+'" data-act="tbl" data-v="0">'+t('{0}本ずつ',perHalf)+'</button><button class="'+(showAll?'on':'')+'" data-act="tbl" data-v="1">'+t('全{0}本',st.cap)+'</button>':'')+'<button class="pri" data-act="undo">'+t('↩ 1本戻す')+'</button>'+(mode==='target'?'<button data-act="zoomReset"'+(zoomed()?'':' disabled')+'>'+t('🔍 拡大を戻す')+'</button>':'')+'</div>';
   h+='<div class="chips"><button class="'+(DB.set.sort?'on':'')+'" data-act="sortEnd">'+t('エンド終了で点数順に並べる')+'</button></div>';
@@ -221,13 +222,13 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     if(S.halves.length>1&&(!showAll||hi===list[list.length-1]))h+='<tr><th colspan="'+(ch+1)+'">'+t('合計')+'</th><td colspan="2">'+st.total+'</td></tr>';
     h+='</tfoot></table>'});
   h+='</div>';var tb=h;h=hMain;
-  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button>'+(mode==='target'?'<button class="'+(side?'on':'')+'" data-act="side">'+t('表と的を左右に並べる')+'</button>':'')+'</div>';
+  h+='<div class="chips"><button class="'+(mode==='target'?'on':'')+'" data-act="mode" data-v="target">'+t('的にタッチ')+'</button><button class="'+(mode==='key'?'on':'')+'" data-act="mode" data-v="key">'+t('点数ボタン')+'</button>'+(mode==='target'&&!land?'<button class="'+(side?'on':'')+'" data-act="side">'+t('表と的を左右に並べる')+'</button>':'')+'</div>';
   if(mode==='target'){
     var vb=g.vb.join(' '),faces='';g.cps.forEach(function(cp){faces+=faceSVG(g.f,cp[0],cp[1])});
-    var tgh='<div class="tgwrap"><svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>';
+    var tgh='<div class="tgwrap">'+(land?'<div class="ltot">'+st.total+' / '+st.max+'</div>':'')+'<svg id="tg" viewBox="'+((ui.tgView&&ui.tgKey===g.vb.join(' '))?ui.tgView.join(' '):vb)+'" style="touch-action:pan-y"><g id="world">'+faces+'<g>'+arrowMarks(S,c.h,g,c)+'</g></g></svg></div>';
     var ti=tb.indexOf('<table');h+=(side?tb.slice(0,ti)+'</div><div class="sbs"><div class="scwrap">'+tb.slice(ti)+tgh+'</div>':tgh+tb)
       +'<p class="note">'+t('的を押すと丸が出ます。そのまま押さえて指を動かすと、丸を動かせます（点数が真上に出ます）。指を離した位置の得点が入ります。2本指で拡大・移動して、拡大したままタップできます。すぐに指を動かすと画面がスクロールします（拡大中は横になぞると的が動きます）。的の外をタップするとミスになります。')+(g.f.spots>1?t('三つ目は押した位置に近い的が対象です。'):'')+'</p>'}
-  else{h+=keypad(g.f,'key')+tb}
+  else{if(land){var ti2=tb.indexOf('<table');h+=tb.slice(0,ti2)+'</div><div class="sbs"><div class="scwrap">'+tb.slice(ti2)+'<div class="tgwrap"><div class="ltot s">'+st.total+' / '+st.max+'</div>'+keypad(g.f,'key')+'</div></div>'}else h+=keypad(g.f,'key')+tb}
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
     +'<div class="grid2"><div><label>'+t('氏名')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('日付')+'</label><input type="date" data-bind="date" value="'+esc(S.date)+'"></div></div>'
@@ -238,7 +239,8 @@ function renderRec(){var S=curS(),el=$('#v-rec');
     +'<div class="row"><button data-act="saveRec" class="pri">'+((ui.past||st.done)?t('✅ 上書き保存'):t('✅ 保存'))+'</button></div>'
     +'<div class="row"><button data-act="newDlg">'+t('＋ 新しい記録')+'</button><button data-act="go" data-v="ana">'+t('この記録の分析へ')+'</button></div>'
     +'<p class="note">'+t('入力した内容は自動で保存されています。新しい記録を始めても、今の記録は履歴に残ります。')+'</p></div>';
-  el.innerHTML=h;placeHit()}
+  el.innerHTML=h;placeHit();
+  if(land&&ui.scrollSbs!==S.id){ui.scrollSbs=S.id;setTimeout(function(){var e=document.querySelector('#v-rec .sbs');if(e)window.scrollTo(0,Math.max(0,e.getBoundingClientRect().top+window.scrollY-4))},60)}}
 var GEAR=[['sight','サイト（数値）','例: 70m 4.52'],['hite','ハイト（ブレースハイト）','例: 23.5cm'],['tiller','ティラー','例: 上13 下10'],['nock','ノッキングポイント','例: +3mm'],['lbs','ポンド','例: 38lbs'],['arrow','矢（長さ・番手）','例: 29.5in 1000'],['other','その他セッティング','例: クリッカー位置']];
 function gearHTML(S){var g=S.gear||{};
   return '<h2 style="margin-top:10px">'+t('弓具セッティング')+'</h2><div class="grid2">'+GEAR.map(function(f){return '<div><label>'+t(f[1])+'</label><input data-gear="'+f[0]+'" placeholder="'+esc(t(f[2]))+'" value="'+esc(g[f[0]]||'')+'"></div>'}).join('')+'</div><p class="note">'+t('次の新しい記録には、前回の内容が引き継がれます。')+'</p>'}
@@ -677,5 +679,6 @@ if('serviceWorker' in navigator&&!NATIVE&&/^https?:$/.test(location.protocol)){
 }
 if(!DB.cur&&DB.sessions.length)DB.cur=DB.sessions[DB.sessions.length-1].id;
 show('rec');
+(function(){var lastL=isLand(),tm=null;function chk(){clearTimeout(tm);tm=setTimeout(function(){var n=isLand();if(n!==lastL){lastL=n;ui.scrollSbs=null;if(ui.view==='rec')render()}},150)}window.addEventListener('resize',chk);window.addEventListener('orientationchange',chk)})();
 window.__A={DB:function(){return DB},scoreAt:scoreAt,FACES:FACES,ROUNDS:ROUNDS,MKINDS:MKINDS,BOWS:BOWS,LANGS:LANGS,t:t,setLang:function(l){LANG=l;render()}};
 })();
