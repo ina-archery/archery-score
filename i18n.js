@@ -5,6 +5,7 @@
    Missing keys fall back to the Japanese text. Simple, short wording is used on purpose. */
 window.I18N={};
 window.I18N.en={
+'練習':'Practice','試合':'Competition','練習か試合か':'Practice or competition','練習も試合も':'All',
 'アーチェリー スコア記録':'Archery Score',
 '記録':'Score','履歴':'History','分析':'Stats','設定':'Settings',
 '相手':'Opponent','自分':'Me','名前なし':'No name','対戦':'Match',

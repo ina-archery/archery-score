@@ -65,6 +65,9 @@ var MKINDS={
 var MUNIT={ind:'個人戦',team:'団体戦',mix:'ミックス団体'};
 var MSYS={set:'セット制',cum:'トータルスコア制'};
 function mkind(u,y){return (y==='cum'?'c-':'r-')+u}
+var PURP={practice:'練習',comp:'試合'};
+function purp(s){return s.purpose==='comp'?'comp':'practice'}
+function purSel(attr,cur){return '<select '+attr+'>'+Object.keys(PURP).map(function(k){return '<option value="'+k+'"'+(cur===k?' selected':'')+'>'+t(PURP[k])+'</option>'}).join('')+'</select>'}
 var BOWS={recurve:'リカーブ',compound:'コンパウンド',barebow:'ベアボウ',other:'その他'};
 var ZC={10:'#f7d117',9:'#f7d117',8:'#e0342b',7:'#e0342b',6:'#2a8be0',5:'#2a8be0',4:'#2b2b2b',3:'#2b2b2b',2:'#fafafa',1:'#fafafa'};
 
@@ -72,7 +75,7 @@ var ZC={10:'#f7d117',9:'#f7d117',8:'#e0342b',7:'#e0342b',6:'#2a8be0',5:'#2a8be0'
 var KEY='archery_pro_v1';
 var DB=load();
 LANG=pickLang(DB.set.lang);
-var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',dlgKind:'score'};
+var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',histPur:'all',anaPur:'all',dlgKind:'score'};
 var CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 function defSet(){return {cursorX:2,zoom:1.5,lang:'auto',name:'',arrowMm:5.5,offset:true,sort:true,vib:true,wake:false,bow:'recurve',mode:'target'}}
 function load(){var d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -220,7 +223,7 @@ function renderRec(){var S=curS(),el=$('#v-rec');
   h+='<div class="row">'+(cell?'<button data-act="clr">'+t('選んだ矢を消す')+'</button>':'')+(mode==='target'?'<button data-act="viewAll">'+(ui.all?t('表示：全エンド'):t('表示：今のエンドだけ'))+'</button>':'')+'</div></div>';
   h+='<details class="card" id="info" '+(ui.info?'open':'')+'><summary><b>'+t('記録の情報・メモ')+'</b></summary>'
     +'<div class="grid2"><div><label>'+t('氏名')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('日付')+'</label><input type="date" data-bind="date" value="'+esc(S.date)+'"></div></div>'
-    +'<label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'">'
+    +'<div class="grid2"><div><label>'+t('練習か試合か')+'</label>'+purSel('data-bind="purpose"',purp(S))+'</div><div><label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'"></div></div>'
     +'<div class="grid2"><div><label>'+t('天候・風')+'</label><input data-bind="weather" placeholder="'+esc(t('例: 晴れ・右から3m'))+'" value="'+esc(S.weather)+'"></div><div><label>'+t('弓種')+'</label><select data-bind="bow">'+Object.keys(BOWS).map(function(k){return '<option value="'+k+'"'+(S.bow===k?' selected':'')+'>'+t(BOWS[k])+'</option>'}).join('')+'</select></div></div>'
     +gearHTML(S)+'<label>'+t('メモ（調子・反省・セッティング）')+'</label><textarea rows="3" data-bind="memo">'+esc(S.memo)+'</textarea></details>';
   h+='<div class="card"><div class="row">'+(NATIVE?'':'<button data-act="print">'+t('🖨 スコアカード印刷')+'</button>')+'<button data-act="csv">'+t('CSV保存')+'</button><button data-act="copy">'+t('結果をコピー')+'</button><button data-act="share">'+t('共有')+'</button></div>'
@@ -286,7 +289,9 @@ var ACT={
  rgrp:function(b){var cur=readDlg()||{};cur.round=b.dataset.v;cur.per=undefined;ui.dlgVals=cur;openNew()},
  open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;ui.tgView=null;show('rec')},
  saveRec:function(){save();flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
+ togPur:function(b){var S=DB.sessions.filter(function(s){return s.id===b.dataset.id})[0];if(!S)return;S.purpose=(purp(S)==='comp'?'practice':'comp');save();render()},
  del:function(b){if(confirm(t('この記録を削除しますか？（元に戻せません）'))){DB.sessions=DB.sessions.filter(function(s){return s.id!==b.dataset.id});if(DB.cur===b.dataset.id)DB.cur=null;save();render()}},
+ histPur:function(b){ui.histPur=b.dataset.v;render()},
  histRound:function(b){ui.histRound=b.dataset.v;render()},
  csv:function(){exportCSV()},
  copy:function(b){copyText(summaryText(curS()),b)},
@@ -300,6 +305,7 @@ var ACT={
  resetNext:function(){var d=$('#dlg');d.innerHTML='<h2 style="color:var(--warn)">⚠⚠ '+t('本当にリセットしますか？')+'</h2><p><b>'+t('記録 {0}件・予定 {1}件 が消えます。元に戻せません。',DB.sessions.length,DB.events.length)+'</b></p><div class="row"><button class="pri" data-act="resetCancel">'+t('やめる')+'</button><button class="warn" data-act="resetGo">'+t('完全にリセットする')+'</button></div>'},
  resetCancel:function(){var d=$('#dlg');d.close();d.className=''},
  resetGo:function(){DB.sessions=[];DB.events=[];DB.cur=null;ui.tgView=null;ui.calSel=null;save();var d=$('#dlg');d.close();d.className='';flash(t('リセットしました'));show('rec')},
+ anaPur:function(b){ui.anaPur=b.dataset.v;render()},
  anaScope:function(b){ui.anaScope=b.dataset.v;render()},
  mKey:function(b){mKey(b.dataset.v)},
  mCell:function(b){var S=curS();S.cur={g:b.dataset.g,s:+b.dataset.s,side:b.dataset.side,a:+b.dataset.a};save();render()},
@@ -379,12 +385,15 @@ function evTag(d){var e=DB.events.filter(function(x){return x.date===d}).map(fun
 function listItem(s){var sub,title;
   if(s.type==='match'){var M=mState(s);title=t('対戦 vs {0}',esc(oppName(s)))+'　<small>'+esc(M.label)+'</small>';sub=esc(s.date)+' ・ '+esc(mname(s))+' ・ '+esc(s.place)}
   else{var st=stat(s);title=st.total+'<small> / '+st.max+'</small>　'+t('平均')+' '+f2(st.avg);sub=esc(s.date)+evTag(s.date)+' ・ '+esc(rlShort(s))+' ・ '+esc(s.place)+(st.done?'':' ・ '+t('入力中')+' '+st.n+'/'+st.cap)}
-  return '<div class="li"><div class="m" data-act="open" data-id="'+s.id+'"><b>'+title+'</b><div>'+sub+'</div></div><button data-act="del" data-id="'+s.id+'" class="warn">'+t('削除')+'</button></div>'}
+  title=(purp(s)==='comp'?'<span class="pbadge">🏆 '+t('試合')+'</span> ':'')+title;
+  return '<div class="li"><div class="m" data-act="open" data-id="'+s.id+'"><b>'+title+'</b><div>'+sub+'</div></div><button data-act="togPur" data-id="'+s.id+'" title="'+t('練習か試合か')+'">'+(purp(s)==='comp'?t('試合'):t('練習'))+' ⇄</button><button data-act="del" data-id="'+s.id+'" class="warn">'+t('削除')+'</button></div>'}
 function renderHist(){var el=$('#v-hist'),list=DB.sessions.slice().sort(function(a,b){return (b.date<a.date?-1:b.date>a.date?1:b.created-a.created)});
   var rounds={};DB.sessions.forEach(function(s){if(s.type==='score')rounds[s.round]=rlShort(s)});
   var h='<div class="row" style="margin:0 0 8px"><button class="pri" data-act="newDlg">'+t('＋ 新しい記録')+'</button></div>';
   h+='<div class="chips"><button class="'+(ui.histRound==='all'?'on':'')+'" data-act="histRound" data-v="all">'+t('すべて')+'</button><button class="'+(ui.histRound==='match'?'on':'')+'" data-act="histRound" data-v="match">'+t('対戦')+'</button>'
     +Object.keys(rounds).map(function(k){return '<button class="'+(ui.histRound===k?'on':'')+'" data-act="histRound" data-v="'+k+'">'+esc(rounds[k])+'</button>'}).join('')+'</div>';
+  h=h.replace('<div class="chips">','<div class="chips">'+['all','practice','comp'].map(function(k){return '<button class="'+(ui.histPur===k?'on':'')+'" data-act="histPur" data-v="'+k+'">'+(k==='all'?t('練習も試合も'):t(PURP[k]))+'</button>'}).join('')+'</div><div class="chips">');
+  list=list.filter(function(s){return ui.histPur==='all'||purp(s)===ui.histPur});
   list=list.filter(function(s){return ui.histRound==='all'||(ui.histRound==='match'?s.type==='match':s.round===ui.histRound)});
   h+=list.length?list.map(listItem).join(''):'<p class="note">'+t('記録がありません。')+'</p>';
   el.innerHTML=h}
@@ -392,13 +401,14 @@ function renderHist(){var el=$('#v-hist'),list=DB.sessions.slice().sort(function
 /* ================= 分析 ================= */
 function scopeHalves(){var out=[];
   if(ui.anaScope==='cur'){var S=curS();if(S&&S.type==='score')S.halves.forEach(function(h,hi){out.push({S:S,hi:hi})})}
-  else DB.sessions.forEach(function(S){if(S.type!=='score')return;if(ui.anaRound!=='all'&&S.round!==ui.anaRound)return;S.halves.forEach(function(h,hi){if(ui.anaDist!=='all'&&h.d!==ui.anaDist)return;out.push({S:S,hi:hi})})});
+  else DB.sessions.forEach(function(S){if(S.type!=='score')return;if(ui.anaRound!=='all'&&S.round!==ui.anaRound)return;if(ui.anaPur!=='all'&&purp(S)!==ui.anaPur)return;S.halves.forEach(function(h,hi){if(ui.anaDist!=='all'&&h.d!==ui.anaDist)return;out.push({S:S,hi:hi})})});
   return out}
 function renderAna(){var el=$('#v-ana'),S=curS(),h='';
   h+='<div class="chips"><button class="'+(ui.anaScope==='cur'?'on':'')+'" data-act="anaScope" data-v="cur">'+t('今の記録')+'</button><button class="'+(ui.anaScope==='all'?'on':'')+'" data-act="anaScope" data-v="all">'+t('過去の記録を合わせて')+'</button></div>';
   if(ui.anaScope==='all'){var rs={},ds={};DB.sessions.forEach(function(s){if(s.type!=='score')return;rs[s.round]=rlShort(s);s.halves.forEach(function(x){ds[x.d]=1})});
     h+='<div class="grid2"><div><label>'+t('ラウンド')+'</label><select id="aR"><option value="all">'+t('すべて')+'</option>'+Object.keys(rs).map(function(k){return '<option value="'+k+'"'+(ui.anaRound===k?' selected':'')+'>'+esc(rs[k])+'</option>'}).join('')+'</select></div>'
-      +'<div><label>'+t('距離')+'</label><select id="aD"><option value="all">'+t('すべて')+'</option>'+Object.keys(ds).map(function(k){return '<option value="'+esc(k)+'"'+(ui.anaDist===k?' selected':'')+'>'+esc(k||'―')+'</option>'}).join('')+'</select></div></div><div style="height:8px"></div>'}
+      +'<div><label>'+t('距離')+'</label><select id="aD"><option value="all">'+t('すべて')+'</option>'+Object.keys(ds).map(function(k){return '<option value="'+esc(k)+'"'+(ui.anaDist===k?' selected':'')+'>'+esc(k||'―')+'</option>'}).join('')+'</select></div></div><div style="height:8px"></div>'
+    +'<div class="chips">'+['all','practice','comp'].map(function(k){return '<button class="'+(ui.anaPur===k?'on':'')+'" data-act="anaPur" data-v="'+k+'">'+(k==='all'?t('練習も試合も'):t(PURP[k]))+'</button>'}).join('')+'</div>'}
   var sc=scopeHalves();
   if(ui.anaScope==='cur'&&(!S||S.type!=='score')){el.innerHTML=h+'<div class="card"><p class="note">'+t('分析する記録（通常の記録）を開いてください。')+'</p></div>';bindAna();return}
   var cnt={},tot=0,sum=0,pts=[],sq=0;
@@ -460,7 +470,7 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
   if(keep){var cur=readDlg();if(cur)ui.dlgVals=o=cur}
   var h='<h2>'+t('新しい記録')+'</h2><div class="chips"><button class="'+(k==='score'?'on':'')+'" data-act="dlgKind" data-v="score">'+t('通常の記録（ラウンド）')+'</button><button class="'+(k==='match'?'on':'')+'" data-act="dlgKind" data-v="match">'+t('対戦（マッチ）')+'</button></div>'
    +'<div class="grid2"><div><label>'+t('氏名')+'</label><input id="d_name" value="'+esc(o.name!=null?o.name:DB.set.name)+'"></div><div><label>'+t('日付')+'</label><input id="d_date" type="date" value="'+esc(o.date||today())+'"></div></div>'
-   +'<label>'+t('大会名・場所')+'</label><input id="d_place" value="'+esc(o.place||'')+'">';
+   +'<div class="grid2"><div><label>'+t('練習か試合か')+'</label>'+purSel('id="d_purpose"',o.purpose||'practice')+'</div><div><label>'+t('大会名・場所')+'</label><input id="d_place" value="'+esc(o.place||'')+'"></div></div>';
   if(k==='score'){var rd=o.round||'70',R=ROUNDS.filter(function(r){return r.id===rd})[0]||ROUNDS[0],perSel=o.per&&o.per!=='m'?+o.per:R.per,manual=(o.per==='m')||([3,6,9,12].indexOf(perSel)<0);
     var G=rgroupOf(rd);
     h+='<label>'+t('ラウンド')+'</label><div class="chips">'+RGROUPS.map(function(g){return '<button class="'+(g.id===G.id?'on':'')+'" data-act="rgrp" data-v="'+g.r[0]+'">'+t(g.l)+'</button>'}).join('')+'</div>'
@@ -480,13 +490,13 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
   d.className='';d.innerHTML=h;if(!d.open)d.showModal()}
 document.addEventListener('rr',function(){ui.dlgVals=readDlg();openNew()});
 function readDlg(){var g=function(i){var e=$('#'+i);return e?e.value:undefined};
-  return {name:g('d_name'),date:g('d_date'),place:g('d_place'),round:g('d_round'),face:g('d_face'),per:(g('d_per')==='m'?(g('d_perm')||'m'):g('d_per')),perm:g('d_perm'),dist:g('d_dist'),arrows:g('d_arrows'),halves:g('d_halves'),bow:g('d_bow'),unit:g('d_unit'),mper:g('d_mper'),sys:g('d_sys'),kind:(g('d_unit')?mkind(g('d_unit'),g('d_sys')):undefined),opp:g('d_opp')}}
+  return {name:g('d_name'),date:g('d_date'),place:g('d_place'),purpose:g('d_purpose'),round:g('d_round'),face:g('d_face'),per:(g('d_per')==='m'?(g('d_perm')||'m'):g('d_per')),perm:g('d_perm'),dist:g('d_dist'),arrows:g('d_arrows'),halves:g('d_halves'),bow:g('d_bow'),unit:g('d_unit'),mper:g('d_mper'),sys:g('d_sys'),kind:(g('d_unit')?mkind(g('d_unit'),g('d_sys')):undefined),opp:g('d_opp')}}
 function flash(m){var d=document.createElement('div');d.className='flash';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
 function createFromDlg(){var v=readDlg(),S;
   DB.set.name=v.name||DB.set.name;
   if(ui.dlgKind==='match')S=makeMatch({kind:v.kind||'r-ind',per:v.mper,name:v.name,opp:v.opp,date:v.date||today(),place:v.place});
   else{if(v.bow)DB.set.bow=v.bow;S=makeScore({round:v.round||'70',face:v.face,per:v.per,name:v.name,date:v.date||today(),place:v.place,bow:v.bow||'recurve',free:{dist:v.dist,arrows:v.arrows,halves:v.halves}})}
-  DB.sessions.push(S);DB.cur=S.id;ui.past=false;ui.tgView=null;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
+  S.purpose=(v.purpose==='comp'?'comp':'practice');DB.sessions.push(S);DB.cur=S.id;ui.past=false;ui.tgView=null;ui.dlgVals=null;ui.all=false;save();$('#dlg').close();show('rec')}
 
 /* ================= 対戦（マッチ） ================= */
 function mArr(S,c){return c.g==='so'?S.so[c.side]:S.sets[c.s][c.side]}
@@ -541,7 +551,7 @@ function matchHTML(S){var K=MKINDS[S.kind],M=mState(S),c=S.cur,h='';
   h+='</div>';
   h+='<div class="card"><div class="now">'+(c.g==='so'?t('シュートオフ')+' ':t('{0}セット目',c.s+1)+' ')+esc(c.side==='me'?meName(S):oppName(S))+'　'+t('{0}本目',c.a+1)+'</div>'
     +keypad({indoor:false,min:1},'mKey')+'<div class="row"><button data-act="mUndo">'+t('1本戻す')+'</button><button data-act="mClr">'+t('選んだ矢を消す')+'</button></div></div>';
-  h+='<div class="card"><div class="grid2"><div><label>'+t('自分')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('相手')+'</label><input data-bind="opp" value="'+esc(S.opp)+'"></div></div><label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'"><label>'+t('メモ')+'</label><textarea rows="2" data-bind="memo">'+esc(S.memo)+'</textarea>'
+  h+='<div class="card"><div class="grid2"><div><label>'+t('自分')+'</label><input data-bind="name" value="'+esc(S.name)+'"></div><div><label>'+t('相手')+'</label><input data-bind="opp" value="'+esc(S.opp)+'"></div></div><div class="grid2"><div><label>'+t('練習か試合か')+'</label>'+purSel('data-bind="purpose"',purp(S))+'</div><div><label>'+t('大会名・場所')+'</label><input data-bind="place" value="'+esc(S.place)+'"></div></div><label>'+t('メモ')+'</label><textarea rows="2" data-bind="memo">'+esc(S.memo)+'</textarea>'
     +'<div class="row"><button data-act="newDlg" class="pri">'+t('＋ 新しい記録')+'</button></div></div>';
   return h}
 
