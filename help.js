@@ -1,8 +1,9 @@
 /* ヘルプの中身（質問と答え）。文章は短く、図で見せる。
-   質問を足す = window.HELP.qs に1つ足すだけ。図の部品は下の f.* を使う。 */
-(function(){
+   文章は日本語がもとの文言で、表示するときに T()（翻訳）に通す。
+   質問を足す = qs に1つ足す。足した文言は、各言語ファイル（i18n.xx.js）にも訳を足す。 */
+window.HELPFN=function(T){
 var f={
-  btn:function(t,o){return '<span class="hb'+(o&&o.on?' on':'')+(o&&o.tap?' tap':'')+'">'+t+'</span>'},
+  btn:function(t,o){return '<span class="hb'+(o&&o.on?' on':'')+(o&&o.tap?' tap':'')+'">'+T(t)+'</span>'},
   cell:function(c,t,tap){return '<span class="hc '+c+(tap?' tap':'')+'">'+t+'</span>'},
   row:function(a){return '<div class="hrow">'+a.join(' ')+'</div>'},
   target:function(o){o=o||{};
@@ -11,10 +12,10 @@ var f={
     if(o.out)s+='<text x="104" y="22" font-size="20">&#128070;</text><text x="92" y="36" font-size="10" fill="#e67e00" font-weight="bold">M</text>';
     return s+'</svg>'},
   nav:function(on){var a=[['&#127919;','記録'],['&#128203;','履歴'],['&#128200;','分析'],['&#128197;','予定'],['&#9881;&#65039;','設定']];
-    return '<div class="hnav">'+a.map(function(x){return '<span'+(x[1]===on?' class="on"':'')+'>'+x[0]+'<br><small>'+x[1]+'</small></span>'}).join('')+'</div>'},
+    return '<div class="hnav">'+a.map(function(x){return '<span'+(x[1]===on?' class="on"':'')+'>'+x[0]+'<br><small>'+T(x[1])+'</small></span>'}).join('')+'</div>'},
   dots:function(){return '<div class="hdots">'+['#14532d','#b98a00','#0f766e','#1d4ed8','#1e3a5f','#6d28d9','#be185d','#b3261e','#c2570c','#2b2b2b'].map(function(c){return '<i style="background:'+c+'"></i>'}).join('')+'</div>'}
 };
-window.HELP={
+var H={
   greet:'こんにちは！ &#127919; 使い方で困ったことを選んでね。図で説明するよ。',
   formUrl:'https://docs.google.com/forms/d/e/1FAIpQLSdA_0P6pgH7jp4mR0EoKVj2y-vLKTBp_zdMDlYZDshUU1DYdQ/viewform',
   qs:[
@@ -62,6 +63,10 @@ window.HELP={
       {t:'「設定」を開く',f:f.nav('設定')},
       {t:'「ベースカラー」から好きな色をタップ',f:f.dots()}],
       tip:'すぐに変わります。この端末だけの設定です。'},
+    {id:'lang',icon:'🌐',q:'言語を変えたい',steps:[
+      {t:'「設定」を開く',f:f.nav('設定')},
+      {t:'いちばん上の「言語 / Language」から選ぶ',f:f.row([f.btn('日本語'),f.btn('English',{on:1}),f.btn('简体中文'),f.btn('한국어')])}],
+      tip:'ふだんは、スマホの言語に自動で合わせます。'},
     {id:'backup',icon:'💾',q:'バックアップを取りたい',steps:[
       {t:'「設定」の下のほうの「データ」を開く'},
       {t:'「バックアップ保存」をタップ',f:f.btn('バックアップ保存',{on:1,tap:1})},
@@ -74,4 +79,6 @@ window.HELP={
       tip:'追加し直す前に、必ず「バックアップ保存」を押してね。'}
   ]
 };
-})();
+H.greet=T(H.greet);
+H.qs.forEach(function(q){q.q=T(q.q);q.steps.forEach(function(s){s.t=T(s.t)});if(q.tip)q.tip=T(q.tip)});
+return H};

@@ -3,11 +3,13 @@
 /* ================= i18n =================
    Source language = Japanese. t('日本語') returns the translation of the current language.
    Add a language: add I18N.xx = {...} in i18n.js and one line in LANGS. */
-var LANGS={ja:'日本語',en:'English'};
+var LANGS={ja:'日本語',en:'English',zhs:'简体中文',zht:'繁體中文',ko:'한국어',fr:'Français',de:'Deutsch',it:'Italiano',es:'Español',pt:'Português'};
 var LANG='ja';
-function t(s){var d=(LANG!=='ja'&&window.I18N&&window.I18N[LANG])||null,r=(d&&d[s]!=null)?d[s]:s,a=arguments;
+function t(s){var I=window.I18N||{},d=(LANG!=='ja'&&I[LANG])||null,r=(d&&d[s]!=null)?d[s]:((LANG!=='ja'&&I.en&&I.en[s]!=null)?I.en[s]:s),a=arguments;
   return r.replace(/\{(\d)\}/g,function(m,i){return a[+i+1]})}
-function pickLang(c){if(c&&c!=='auto'&&LANGS[c])return c;var n=(navigator.language||'ja').toLowerCase().slice(0,2);return LANGS[n]?n:'en'}
+function pickLang(c){if(c&&c!=='auto'&&LANGS[c])return c;var n=(navigator.language||'ja').toLowerCase();
+  if(n.indexOf('zh')===0)return /hant|tw|hk|mo/.test(n)?'zht':'zhs';
+  n=n.slice(0,2);return LANGS[n]?n:'en'}
 
 /* ================= 定義 ================= */
 // face: rw=width of one ring(cm) min=lowest score spots=number of faces indoor=indoor(no X) comp=compound indoor(small 10)
@@ -155,7 +157,7 @@ function oppName(S){return S.opp||t('相手')}
 function meName(S){return S.name||t('自分')}
 
 /* ================= 画面切替 ================= */
-function applyStatic(){document.documentElement.lang=LANG;document.title=t('アーチェリー スコア記録');
+function applyStatic(){document.documentElement.lang=({zhs:'zh-Hans',zht:'zh-Hant'})[LANG]||LANG;document.title=t('アーチェリー スコア記録');
   var l=document.querySelectorAll('[data-i18n]');for(var i=0;i<l.length;i++)l[i].textContent=t(l[i].getAttribute('data-i18n'))}
 function show(v){ui.view=v;['rec','hist','ana','cal','set','help'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');var n=$('#n-'+k);if(n)n.className=(k===v||(v==='help'&&k==='set')?'on':'')});render();if(v==='help')window.scrollTo(0,0)}
 function render(){
@@ -610,7 +612,7 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
   h+='<div class="card">'+(up.length?'<div class="now" style="margin:0">'+esc(up[0].title)+' <span>'+(dayDiff(up[0].date)===0?t('今日！'):t('あと{0}日',dayDiff(up[0].date)))+'（'+esc(up[0].date)+'）</span></div>':'<p class="note" style="margin:0">'+t('予定はまだありません。試合や大会の日を登録すると、あと何日か表示されます。')+'</p>')+'</div>';
   var ev={},sc={};DB.events.forEach(function(e){(ev[e.date]=ev[e.date]||[]).push(e)});DB.sessions.forEach(function(x){if(x.type==='score'&&stat(x).n>0)sc[x.date]=(sc[x.date]||0)+1});
   h+='<div class="card"><div class="row" style="margin:0 0 6px;align-items:center"><button data-act="calMonth" data-v="-1" style="flex:none;min-width:3em">◀</button><b style="text-align:center">'+y+t('年')+(mo+1)+t('月')+'</b><button data-act="calMonth" data-v="1" style="flex:none;min-width:3em">▶</button></div>';
-  h+='<table class="cal"><thead><tr>'+['日','月','火','水','木','金','土'].map(function(w){return '<th>'+t(w)+'</th>'}).join('')+'</tr></thead><tbody>';
+  h+='<table class="cal"><thead><tr>'+['日','月','火','水','木','金','土'].map(function(w){return '<th>'+(LANG==='ja'?w:t('曜:'+w))+'</th>'}).join('')+'</tr></thead><tbody>';
   var first=m.getDay(),days=new Date(y,mo+1,0).getDate(),td=today();
   for(var r=0;r<6;r++){if(r*7-first+1>days)break;h+='<tr>';for(var c=0;c<7;c++){var dn=r*7+c-first+1;if(dn<1||dn>days){h+='<td></td>';continue}
     var ds=y+'-'+pd(mo+1)+'-'+pd(dn);h+='<td class="'+(ds===td?'today':'')+(ds===ui.calSel?' selday':'')+'" data-act="calDay" data-v="'+ds+'"><div>'+dn+'</div>'+(ev[ds]?'<i class="ev">●</i>':'')+(sc[ds]?'<i class="sc">●</i>':'')+'</td>'}h+='</tr>'}
@@ -627,12 +629,12 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
 
 /* ================= 設定 ================= */
 function helpAnswer(Q){return '<div class="helpans">'+Q.steps.map(function(st,i){return '<div class="hs"><span class="n">'+(i+1)+'</span><div><b>'+st.t+'</b>'+(st.f?'<div class="fig">'+st.f+'</div>':'')+'</div></div>'}).join('')+(Q.tip?'<p class="note">💡 '+Q.tip+'</p>':'')+'</div>'}
-function renderHelp(){var el=$('#v-help'),H=window.HELP||{qs:[],greet:''},open=ui.helpOpen,h='<div class="helpchat">';
+function renderHelp(){var el=$('#v-help'),H=window.HELPFN?window.HELPFN(t):{qs:[],greet:''},open=ui.helpOpen,h='<div class="helpchat">';
   h+='<div class="row" style="margin:0 0 8px"><button data-act="nav" data-v="set">← '+t('設定にもどる')+'</button></div>';
   h+='<div class="bub ai">'+H.greet+'</div><div class="hlist">';
   H.qs.forEach(function(Q){var on=(open===Q.id);
     h+='<div class="hitem'+(on?' on':'')+'" id="hq_'+Q.id+'"><button class="hqb" data-act="helpOpen" data-id="'+Q.id+'"><span>'+Q.icon+' '+Q.q+'</span><span class="chev">'+(on?'▾':'▸')+'</span></button>'+(on?helpAnswer(Q):'')+'</div>'});
-  if(H.formUrl)h+='<a class="hqlink" href="'+H.formUrl+'" target="_blank" rel="noopener">💬 見つからないとき・要望を送る</a>';
+  if(H.formUrl)h+='<a class="hqlink" href="'+H.formUrl+'" target="_blank" rel="noopener">💬 '+t('見つからないとき・要望を送る')+'</a>';
   el.innerHTML=h+'</div></div>'}
 function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><button class="pri" data-act="nav" data-v="help" style="width:100%;min-height:44px;font-size:1rem">📖 '+t('使い方・よくある質問')+'</button></div>';
