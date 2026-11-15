@@ -75,6 +75,12 @@ var ZC={10:'#f7d117',9:'#f7d117',8:'#e0342b',7:'#e0342b',6:'#2a8be0',5:'#2a8be0'
 var KEY='archery_pro_v1';
 var DB=load();
 LANG=pickLang(DB.set.lang);
+var THEMES={green:['グリーン','#14532d','#4cc27e'],teal:['ティール','#0f766e','#4fd1c5'],blue:['ブルー','#1d4ed8','#6ea8fe'],navy:['ネイビー','#1e3a5f','#7aa7e0'],purple:['パープル','#6d28d9','#b794f6'],pink:['ピンク','#be185d','#f472b6'],red:['レッド','#b3261e','#ff8a80'],orange:['オレンジ','#c2570c','#ffa94d'],black:['ブラック','#2b2b2b','#8a948f']};
+function applyTheme(){var k=THEMES[DB.set.theme]?DB.set.theme:'green',T=THEMES[k],st=document.getElementById('themecss');
+  if(!st){st=document.createElement('style');st.id='themecss';document.head.appendChild(st)}
+  st.textContent=':root{--accent:'+T[1]+'}@media (prefers-color-scheme:dark){:root{--accent:'+T[2]+'}}';
+  var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',T[1])}
+applyTheme();
 var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',histPur:'all',anaPur:'all',dlgKind:'score'};
 var CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 function defSet(){return {cursorX:2,zoom:1.5,lang:'auto',name:'',arrowMm:5.5,offset:true,sort:true,vib:true,wake:false,bow:'recurve',mode:'target'}}
@@ -272,6 +278,7 @@ var ACT={
  calMonth:function(b){ui.calM=(ui.calM||0)+(+b.dataset.v);render()},
  zoomReset:function(){ui.tgView=null;render()},
  viewAll:function(){ui.all=!ui.all;render()},
+ theme:function(b){DB.set.theme=b.dataset.v;save();applyTheme();render()},
  cellSel:function(b){var S=curS();S.cur={h:b.dataset.h!=null?+b.dataset.h:S.cur.h,e:+b.dataset.e,a:+b.dataset.a};save();render()},
  sortEnd:function(){DB.set.sort=!DB.set.sort;save();render()},
  tbl:function(b){ui.tableAll=b.dataset.v==='1';render()},
@@ -620,6 +627,7 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
 /* ================= 設定 ================= */
 function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
+  h+='<div class="card"><h2>'+t('ベースカラー')+'</h2><div class="swatches">'+Object.keys(THEMES).map(function(k){var on=(THEMES[s.theme]?s.theme:'green')===k;return '<button class="sw'+(on?' on':'')+'" data-act="theme" data-v="'+k+'" style="background:'+THEMES[k][1]+'" aria-label="'+esc(t(THEMES[k][0]))+'">'+(on?'✓':'')+'</button>'}).join('')+'</div><p class="note">'+t('アプリの基本の色を選べます。この端末だけの設定です。')+'</p></div>';
   h+='<div class="card"><h2>'+t('基本設定')+'</h2><label>'+t('氏名（新しい記録の初期値）')+'</label><input data-set="name" value="'+esc(s.name)+'">'
    +'<label>'+t('弓種の初期値')+'</label><select data-set="bow">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+(s.bow===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'
    +'</div>';

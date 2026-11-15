@@ -67,6 +67,7 @@ tfoot td,tfoot th{background:var(--soft);font-weight:bold}
 .note{color:var(--sub);font-size:.8rem;margin:.4em 0 0}
 .li{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
 .li .m{flex:1;min-width:0;cursor:pointer}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;color:#fff;font-size:1.2rem;font-weight:700;padding:0}.sw.on{border-color:var(--text)}
 .pbadge{display:inline-block;font-size:.75rem;font-weight:700;background:#d4a800;color:#fff;border-radius:6px;padding:1px 6px;margin-right:4px;vertical-align:middle}
 .li .m b{font-size:1.05rem}
 .li .m div{color:var(--sub);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -94,8 +95,8 @@ dialog::backdrop{background:#0008}
 .res{font-size:1.3rem;font-weight:bold;text-align:center;padding:6px;border-radius:9px;background:var(--soft);margin-bottom:8px}
 table.cal td{height:3em;vertical-align:top;padding:2px;font-size:.85rem}table.cal td{cursor:pointer}table.cal td.selday{background:var(--soft)}table.cal td.today{outline:2px solid var(--sel);outline-offset:-2px}table.cal i{font-style:normal;font-size:.7rem}i.ev{color:var(--warn)}i.sc{color:var(--accent)}
 #printArea{display:none}
-.flash{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:#14532d;color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;pointer-events:none}
-#toast{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:#14532d;color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;cursor:pointer}
+.flash{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;pointer-events:none}
+#toast{position:fixed;left:10px;right:10px;bottom:70px;z-index:99;max-width:520px;margin:0 auto;background:var(--accent);color:#fff;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 14px #0007;cursor:pointer}
 @media print{
   body{padding:0;background:#fff;color:#000}
   body>*:not(#printArea){display:none!important}
