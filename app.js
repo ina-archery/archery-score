@@ -78,9 +78,16 @@ var KEY='archery_pro_v1';
 var DB=load();
 LANG=pickLang(DB.set.lang);
 var THEMES={green:['グリーン','#14532d','#4cc27e'],yellow:['イエロー','#b98a00','#f5c518','#1d1d1d'],teal:['ティール','#0f766e','#4fd1c5'],blue:['ブルー','#1d4ed8','#6ea8fe'],navy:['ネイビー','#1e3a5f','#7aa7e0'],purple:['パープル','#6d28d9','#b794f6'],pink:['ピンク','#be185d','#f472b6'],red:['レッド','#b3261e','#ff8a80'],orange:['オレンジ','#c2570c','#ffa94d'],black:['ブラック','#2b2b2b','#8a948f']};
-function applyTheme(){var k=THEMES[DB.set.theme]?DB.set.theme:'green',T=THEMES[k],st=document.getElementById('themecss');
+function lumY(h){var n=parseInt(h.slice(1),16);return 0.299*((n>>16)&255)+0.587*((n>>8)&255)+0.114*(n&255)}
+function mixHex(h,tc,t){var a=parseInt(h.slice(1),16),b=parseInt(tc.slice(1),16),o=0;for(var sh=16;sh>=0;sh-=8){var x=(a>>sh)&255,y=(b>>sh)&255;o=(o<<8)|Math.max(0,Math.min(255,Math.round(x+(y-x)*t)))}return '#'+('000000'+o.toString(16)).slice(-6)}
+function onFor(h){return lumY(h)>150?'#1d1d1d':'#fff'}
+function customOk(){return DB.set.theme==='custom'&&/^#[0-9a-f]{6}$/i.test(DB.set.customColor||'')}
+function themeOf(){if(customOk()){var c=DB.set.customColor.toLowerCase(),Y=lumY(c),L=Y>150?mixHex(c,'#000000',1-150/Y):c,D=Y<130?mixHex(c,'#ffffff',(130-Y)/(255-Y)):c;return ['',L,D,onFor(L),onFor(D)]}
+  return THEMES[THEMES[DB.set.theme]?DB.set.theme:'green']}
+function applyTheme(){var T=themeOf(),st=document.getElementById('themecss');
   if(!st){st=document.createElement('style');st.id='themecss';document.head.appendChild(st)}
-  st.textContent=':root{--accent:'+T[1]+';--accent-d:'+T[2]+';--on:'+(T[3]||'#fff')+'}@media (prefers-color-scheme:dark){:root{--accent:'+T[2]+'}}';
+  var o1=T[3]||'#fff',o2=T[4]||T[3]||'#fff';
+  st.textContent=':root{--accent:'+T[1]+';--accent-d:'+T[2]+';--on:'+o1+'}@media (prefers-color-scheme:dark){:root{--accent:'+T[2]+';--on:'+o2+'}}';
   var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',T[1])}
 applyTheme();
 var ui={view:'rec',all:false,info:false,mode:null,anaScope:'cur',anaRound:'all',anaDist:'all',histRound:'all',histPur:'all',anaPur:'all',dlgKind:'score'};
@@ -273,9 +280,9 @@ var ACT={
  mode:function(b){ui.mode=b.dataset.v;DB.set.mode=ui.mode;save();render()},
  key:function(b){keyIn(b.dataset.v)},
  miss:function(){keyIn('M')},
- goal:function(){var S=curS();if(!S)return;var v=prompt(t('目標点数を入力（空で解除）'),S.goal||'');if(v===null)return;S.goal=Math.max(0,Math.min(maxArrows(S)*10,Math.round(+v)||0));save();render()},
- calAdd:function(){var d=prompt(t('日付（例 2026-11-03）'),today());if(!d)return;if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.trim())){alert(t('日付は 2026-11-03 の形で入力してください'));return}var p=d.trim().split('-');d=p[0]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[2]).slice(-2);var ti=prompt(t('予定の名前（例 新人戦）'),'');if(!ti)return;DB.events.push({id:uid(),date:d,title:ti,kind:'試合'});save();render()},
- calDel:function(b){if(confirm(t('この予定を削除しますか？'))){DB.events=DB.events.filter(function(e){return e.id!==b.dataset.id});save();render()}},
+ goal:function(){var S=curS();if(!S)return;uiDlg({msg:t('目標点数を入力（空で解除）'),input:{value:S.goal||'',type:'number'},onOk:function(v){S.goal=Math.max(0,Math.min(maxArrows(S)*10,Math.round(+v)||0));save();render()}})},
+ calAdd:function(){uiDlg({msg:t('日付（例 2026-11-03）'),input:{value:today(),type:'date'},onOk:function(d){if(!d)return;uiDlg({msg:t('予定の名前（例 新人戦）'),input:{value:''},onOk:function(ti){if(!ti)return;DB.events.push({id:uid(),date:d,title:ti,kind:'試合'});save();render()}})}})},
+ calDel:function(b){var id=b.dataset.id;uiDlg({msg:t('この予定を削除しますか？'),okLabel:t('削除'),danger:true,onOk:function(){DB.events=DB.events.filter(function(e){return e.id!==id});save();render()}})},
  arrTag:function(b){var a=ui.anaSelA;if(!a)return;a.tag=(a.tag===b.dataset.v)?null:b.dataset.v;save();render()},
  arrPick:function(b){var n=+b.dataset.n,hit=null;(ui.anaAll||[]).forEach(function(p){if(p.n===n&&!hit)hit=p});if(hit){ui.anaSelA=hit.a;render()}},
  anaEnd:function(b){ui.anaEnd=b.dataset.v;render()},
@@ -294,7 +301,7 @@ var ACT={
   var rest=en.filter(Boolean).sort(function(a,b){return (a.n||0)-(b.n||0)});rest.forEach(function(a,k){a.n=k+1});
   for(var k=0;k<en.length;k++)en[k]=rest[k]||null;
   S.cur={h:best.h,e:best.e,a:rest.length};save();render()},
- newDlg:function(){var S=curS();if(S&&S.type==='score'){var st=stat(S);if(st.n>0&&!st.done&&!confirm(t('この記録は途中です（{0}/{1}本）。履歴に残して、新しい記録を始めますか？',st.n,st.cap)))return}openNew()},
+ newDlg:function(){var S=curS();if(S&&S.type==='score'){var st=stat(S);if(st.n>0&&!st.done){uiDlg({msg:t('この記録は途中です（{0}/{1}本）。履歴に残して、新しい記録を始めますか？',st.n,st.cap),onOk:function(){openNew()}});return}}openNew()},
  create:function(){createFromDlg()},
  closeDlg:function(){$('#dlg').close()},
  dlgKind:function(b){ui.dlgKind=b.dataset.v;openNew(true)},
@@ -302,7 +309,7 @@ var ACT={
  open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;ui.tgView=null;show('rec')},
  saveRec:function(){save();flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
  togPur:function(b){var S=DB.sessions.filter(function(s){return s.id===b.dataset.id})[0];if(!S)return;S.purpose=(purp(S)==='comp'?'practice':'comp');save();render()},
- del:function(b){if(confirm(t('この記録を削除しますか？（元に戻せません）'))){DB.sessions=DB.sessions.filter(function(s){return s.id!==b.dataset.id});if(DB.cur===b.dataset.id)DB.cur=null;save();render()}},
+ del:function(b){var id=b.dataset.id;uiDlg({msg:t('この記録を削除しますか？（元に戻せません）'),okLabel:t('削除'),danger:true,onOk:function(){DB.sessions=DB.sessions.filter(function(s){return s.id!==id});if(DB.cur===id)DB.cur=null;save();render()}})},
  histPur:function(b){ui.histPur=b.dataset.v;render()},
  histRound:function(b){ui.histRound=b.dataset.v;render()},
  csv:function(){exportCSV()},
@@ -327,11 +334,12 @@ var ACT={
 };
 document.addEventListener('click',function(e){var b=e.target.closest('[data-act]');if(!b||!ACT[b.dataset.act])return;ACT[b.dataset.act](b,e)});
 document.addEventListener('input',function(e){var x=e.target;
+  if(x.dataset&&('cc' in x.dataset)){DB.set.theme='custom';DB.set.customColor=x.value;save();applyTheme();return}
   if(x.dataset&&x.dataset.arrc&&ui.anaSelA){ui.anaSelA.c=x.value;save();return}
   if(x.dataset&&x.dataset.gear){var S0=curS();if(S0){S0.gear=S0.gear||{};S0.gear[x.dataset.gear]=x.value;ui.info=true;save()}}
   if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;save();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
   if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake();if(k==='colorScore')render()}});
-document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
+document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&('cc' in x.dataset)){render();return}if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
 document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e.target.open},true);
 
 /* ----- 的タッチ入力（2本指で拡大・タップで入力） ----- */
@@ -503,6 +511,15 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
 document.addEventListener('rr',function(){ui.dlgVals=readDlg();openNew()});
 function readDlg(){var g=function(i){var e=$('#'+i);return e?e.value:undefined};
   return {name:g('d_name'),date:g('d_date'),place:g('d_place'),purpose:g('d_purpose'),round:g('d_round'),face:g('d_face'),per:(g('d_per')==='m'?(g('d_perm')||'m'):g('d_per')),perm:g('d_perm'),dist:g('d_dist'),arrows:g('d_arrows'),halves:g('d_halves'),bow:g('d_bow'),unit:g('d_unit'),mper:g('d_mper'),sys:g('d_sys'),kind:(g('d_unit')?mkind(g('d_unit'),g('d_sys')):undefined),opp:g('d_opp')}}
+function uiDlg(o){var d=document.getElementById('dlgq');if(!d){d=document.createElement('dialog');d.id='dlgq';document.body.appendChild(d)}
+  var inp=o.input?(o.input.textarea?'<textarea id="qin" rows="5" readonly>'+esc(o.input.value||'')+'</textarea>':'<input id="qin" type="'+(o.input.type||'text')+'" value="'+esc(o.input.value==null?'':String(o.input.value))+'"'+(o.input.type==='number'?' inputmode="numeric"':'')+'>'):'';
+  d.className=o.danger?'danger':'';
+  d.innerHTML='<p class="qmsg">'+esc(o.msg)+'</p>'+inp+'<div class="row" style="justify-content:flex-end;margin-top:12px">'+(o.noCancel?'':'<button type="button" id="qno">'+t('キャンセル')+'</button>')+'<button type="button" id="qok" class="'+(o.danger?'warn':'pri')+'">'+(o.okLabel||'OK')+'</button></div>';
+  var done=false;function fin(ok){if(done)return;done=true;var v=null;var e=document.getElementById('qin');if(e)v=e.value;if(d.open)d.close();if(ok&&o.onOk)o.onOk(v)}
+  d.onclose=function(){if(d.open)return;fin(false)};d.oncancel=function(){};
+  d.querySelector('#qok').onclick=function(){fin(true)};var nb=d.querySelector('#qno');if(nb)nb.onclick=function(){fin(false)};
+  var ie=d.querySelector('#qin');if(ie&&!o.input.textarea)ie.onkeydown=function(ev){if(ev.key==='Enter'){ev.preventDefault();fin(true)}};
+  d.showModal();if(ie){if(o.input.textarea){ie.select()}else{ie.focus();try{ie.select()}catch(x){}}}}
 function flash(m){var d=document.createElement('div');d.className='flash';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
 function createFromDlg(){var v=readDlg(),S;
   DB.set.name=v.name||DB.set.name;
@@ -578,14 +595,14 @@ function summaryText(S){if(!S)return '';
   var gl=GEAR.filter(function(f){return S.gear&&S.gear[f[0]]}).map(function(f){return t(f[1]).replace(/（.*?）/,'')+' '+S.gear[f[0]]});if(gl.length)x+='\n⚙ '+gl.join(' / ');
   var al=[];S.halves.forEach(function(h,hi){h.ends.forEach(function(en,ei){en.forEach(function(a){if(a&&(a.c||a.tag)){var g=TAGS.filter(function(z){return z[0]===a.tag})[0];al.push((hi*h.ends.length+ei+1)+t('立ち')+' '+lab(a)+(g?' '+g[1]:'')+(a.c?' '+a.c:''))}})})});if(al.length)x+='\n'+t('矢ごとのメモ')+'\n'+al.join('\n');
   if(S.weather)x+='\n'+t('天候')+': '+S.weather;if(S.memo)x+='\n'+t('メモ')+': '+S.memo;return x}
-function copyText(tx,b){function ok(){if(b){var o=b.textContent;b.textContent=t('コピーしました');setTimeout(function(){b.textContent=o},1500)}else alert(t('コピーしました'))}
-  function fb(){var a=document.createElement('textarea');a.value=tx;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){prompt(t('コピーしてください'),tx)}document.body.removeChild(a)}
+function copyText(tx,b){function ok(){if(b){var o=b.textContent;b.textContent=t('コピーしました');setTimeout(function(){b.textContent=o},1500)}else flash(t('コピーしました'))}
+  function fb(){var a=document.createElement('textarea');a.value=tx;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){uiDlg({msg:t('コピーしてください'),input:{value:tx,textarea:true},noCancel:true})}document.body.removeChild(a)}
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(ok,fb);else fb()}
 // Save a file: browser = download, Android app (Capacitor) = write to cache + share sheet
 function saveFile(name,text,type){
   if(NATIVE&&plug('Filesystem')&&plug('Share')){
     plug('Filesystem').writeFile({path:name,data:text,directory:'CACHE',encoding:'utf8'})
-      .then(function(r){return plug('Share').share({title:name,url:r.uri})}).catch(function(){alert(t('保存できませんでした'))});return}
+      .then(function(r){return plug('Share').share({title:name,url:r.uri})}).catch(function(){flash(t('保存できませんでした'))});return}
   var b=new Blob(['﻿'+text],{type:type+';charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a)},500)}
 function exportCSV(){var S=curS();if(!S||S.type!=='score')return;
   var rows=[[t('氏名'),S.name,t('日付'),S.date,t('ラウンド'),rl(S),t('大会名・場所'),S.place],[t('回'),t('距離'),t('標的面'),t('エンド'),t('本'),t('点'),'X','x(cm)','y(cm)',t('的番号'),t('印'),t('コメント')]];
@@ -641,7 +658,7 @@ function renderHelp(){var el=$('#v-help'),H=window.HELPFN?window.HELPFN(t):{qs:[
 function renderSet(){var s=DB.set,h='';
   h+='<div class="card"><button class="pri" data-act="nav" data-v="help" style="width:100%;min-height:44px;font-size:1rem">📖 '+t('使い方・よくある質問')+'</button></div>';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
-  h+='<div class="card"><h2>'+t('ベースカラー')+'</h2><div class="swatches">'+Object.keys(THEMES).map(function(k){var on=(THEMES[s.theme]?s.theme:'green')===k;return '<button class="sw'+(on?' on':'')+'" data-act="theme" data-v="'+k+'" style="background:'+THEMES[k][1]+'" aria-label="'+esc(t(THEMES[k][0]))+'">'+(on?'✓':'')+'</button>'}).join('')+'</div><p class="note">'+t('アプリの基本の色を選べます。この端末だけの設定です。')+'</p></div>';
+  h+='<div class="card"><h2>'+t('ベースカラー')+'</h2><div class="swatches">'+Object.keys(THEMES).map(function(k){var on=!customOk()&&(THEMES[s.theme]?s.theme:'green')===k;return '<button class="sw'+(on?' on':'')+'" data-act="theme" data-v="'+k+'" style="background:'+THEMES[k][1]+'" aria-label="'+esc(t(THEMES[k][0]))+'">'+(on?'✓':'')+'</button>'}).join('')+'<label class="sw cust'+(customOk()?' on':'')+'" style="background:'+(customOk()?DB.set.customColor:'conic-gradient(#e0342b,#f7d117,#3fbf6a,#2a8be0,#8a3fd4,#e0342b)')+'" aria-label="'+esc(t('自由に選ぶ'))+'"><input type="color" data-cc value="'+(DB.set.customColor||'#14532d')+'">'+(customOk()?'✓':'')+'</label>'+'</div><p class="note">'+t('アプリの基本の色を選べます。この端末だけの設定です。')+'</p></div>';
   h+='<div class="card"><h2>'+t('基本設定')+'</h2><label>'+t('氏名（新しい記録の初期値）')+'</label><input data-set="name" value="'+esc(s.name)+'">'
    +'<label>'+t('弓種の初期値')+'</label><select data-set="bow">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+(s.bow===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'
    +'</div>';
@@ -660,7 +677,7 @@ function renderSet(){var s=DB.set,h='';
   h+='<div class="card" style="margin-top:56px;border:2px solid var(--warn)"><h2 style="color:var(--warn)">'+t('リセット')+'</h2><p class="note">'+t('記録と予定をすべて消します（設定は残ります）。押しても、すぐには消えません。確認が2回出ます。')+'</p><div class="row"><button class="warn" data-act="resetDlg">'+t('リセットする…')+'</button></div></div><div style="height:40px"></div>';
   $('#v-set').innerHTML=h}
 $('#file').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(String(r.result).replace(/^﻿/,''));if(!d.sessions)throw 0;
-    var ids={};DB.sessions.forEach(function(s){ids[s.id]=1});var n=0;d.sessions.forEach(function(s){if(!ids[s.id]){DB.sessions.push(s);n++}});var eids={};DB.events.forEach(function(e){eids[e.id]=1});(d.events||[]).forEach(function(e){if(!eids[e.id])DB.events.push(e)});save();alert(t('{0}件を追加しました',n));render()}catch(e){alert(t('読み込めませんでした'))}};r.readAsText(f);this.value=''});
+    var ids={};DB.sessions.forEach(function(s){ids[s.id]=1});var n=0;d.sessions.forEach(function(s){if(!ids[s.id]){DB.sessions.push(s);n++}});var eids={};DB.events.forEach(function(e){eids[e.id]=1});(d.events||[]).forEach(function(e){if(!eids[e.id])DB.events.push(e)});save();flash(t('{0}件を追加しました',n));render()}catch(e){flash(t('読み込めませんでした'))}};r.readAsText(f);this.value=''});
 var wl=null;function wake(){try{if(DB.set.wake&&navigator.wakeLock){navigator.wakeLock.request('screen').then(function(l){wl=l}).catch(function(){})}else if(wl){wl.release();wl=null}}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wake()});
 wake();

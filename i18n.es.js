@@ -372,4 +372,5 @@ window.I18N.es={
 '曜:金':'Vi',
 '曜:土':'Sá',
 '点数を的の色で色分けする（表と点数ボタン）':'Colorear las puntuaciones como la diana (tabla y teclas de puntuación)',
+'自由に選ぶ':'Elegir cualquier color',
 };

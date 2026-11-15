@@ -72,7 +72,7 @@ tfoot td,tfoot th{background:var(--soft);font-weight:bold}
 .note{color:var(--sub);font-size:.8rem;margin:.4em 0 0}
 .li{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
 .li .m{flex:1;min-width:0;cursor:pointer}
-.swatches{display:flex;flex-wrap:wrap;gap:10px}.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;color:#fff;font-size:1.2rem;font-weight:700;padding:0}.sw.on{border-color:var(--text)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;color:#fff;font-size:1.2rem;font-weight:700;padding:0}.sw.on{border-color:var(--text)}.sw.cust{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;box-sizing:border-box}.sw.cust input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
 .helpchat .bub{max-width:92%;padding:9px 12px;border-radius:16px;margin:8px 0;line-height:1.5}
 .helpchat .bub.ai{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px;margin-right:auto}
 .hlist{display:flex;flex-direction:column;gap:8px}
@@ -107,6 +107,9 @@ nav button{flex:1;border:0;border-radius:0;background:transparent;color:#9aa8a1;
 nav button.on{color:var(--accent-d);font-weight:bold;background:#242d29}
 nav button span{display:block;font-size:1.3rem}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);width:min(94vw,520px);padding:14px}
+#dlgq .qmsg{margin:4px 0 10px;font-size:1.05rem;line-height:1.5;white-space:pre-wrap}
+#dlgq input,#dlgq textarea{width:100%;box-sizing:border-box}
+#dlgq .row button{min-height:44px;min-width:96px;font-size:1rem}
 dialog.danger{border:4px solid var(--warn)}
 dialog::backdrop{background:#0008}
 .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-top:8px}
