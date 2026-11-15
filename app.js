@@ -157,11 +157,11 @@ function meName(S){return S.name||t('自分')}
 /* ================= 画面切替 ================= */
 function applyStatic(){document.documentElement.lang=LANG;document.title=t('アーチェリー スコア記録');
   var l=document.querySelectorAll('[data-i18n]');for(var i=0;i<l.length;i++)l[i].textContent=t(l[i].getAttribute('data-i18n'))}
-function show(v){ui.view=v;['rec','hist','ana','cal','set'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');$('#n-'+k).className=(k===v?'on':'')});render()}
+function show(v){ui.view=v;['rec','hist','ana','cal','set','help'].forEach(function(k){$('#v-'+k).className='view'+(k===v?' on':'');var n=$('#n-'+k);if(n)n.className=(k===v||(v==='help'&&k==='set')?'on':'')});render();if(v==='help')window.scrollTo(0,0)}
 function render(){
   var S=curS();applyStatic();
   $('#sub').textContent=S?((S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date):'';
-  if(ui.view==='rec')renderRec();else if(ui.view==='hist')renderHist();else if(ui.view==='ana')renderAna();else if(ui.view==='cal')renderCal();else renderSet()}
+  if(ui.view==='rec')renderRec();else if(ui.view==='hist')renderHist();else if(ui.view==='ana')renderAna();else if(ui.view==='cal')renderCal();else if(ui.view==='help')renderHelp();else renderSet()}
 
 /* ================= 的の描画 ================= */
 function faceSVG(f,cx,cy){var n=11-f.min,rw=f.rw,s='';
@@ -181,7 +181,7 @@ function arrowMarks(S,h,g,cur){var s='',mr=g.R*0.034*(g.f.spots>1?1.3:1);
 
 /* ================= 記録画面 ================= */
 function emptyRec(){
-  var h='<div class="card"><h2>'+t('記録がありません')+'</h2><p class="note">'+t('下のボタンから新しい記録を始めましょう。')+'</p><div class="row"><button class="pri" data-act="newDlg">'+t('＋ 新しい記録')+'</button></div></div>';
+  var h='<div class="card"><h2>'+t('記録がありません')+'</h2><p class="note">'+t('下のボタンから新しい記録を始めましょう。')+'</p><div class="row"><button class="pri" data-act="newDlg">'+t('＋ 新しい記録')+'</button><button data-act="nav" data-v="help">📖 '+t('使い方')+'</button></div></div>';
   var recent=DB.sessions.slice().sort(function(a,b){return b.created-a.created}).slice(0,3);
   if(recent.length){h+='<h2>'+t('最近の記録')+'</h2>'+recent.map(listItem).join('')}
   return h}
@@ -262,6 +262,8 @@ function keyIn(v){var S=curS();if(!S)return;var a;
   putArrow(S,a)}
 var ACT={
  nav:function(b){show(b.dataset.v)},
+ helpAsk:function(b){ui.helpLog=(ui.helpLog||[]).concat(b.dataset.id).slice(-6);ui.helpTyping=true;render();scrollHelp();setTimeout(function(){ui.helpTyping=false;if(ui.view==='help'){render();scrollHelp()}},450)},
+ helpClear:function(){ui.helpLog=[];render()},
  go:function(b){show(b.dataset.v)},
  tab:function(b){var S=curS(),h=+b.dataset.v,n=nextEmpty(S,h,0,0);S.cur=(n&&n.h===h)?n:{h:h,e:0,a:0};ui.tgView=null;save();render()},
  side:function(){DB.set.side=!DB.set.side;ui.tgView=null;save();render()},
@@ -625,7 +627,19 @@ function renderCal(){var el=$('#v-cal'),h='',now=new Date(),m=new Date(now.getFu
   el.innerHTML=h}
 
 /* ================= 設定 ================= */
+function scrollHelp(){var e=document.getElementById('helpLast');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})}
+function helpBub(c,x){return '<div class="bub '+c+'">'+x+'</div>'}
+function helpAnswer(Q){return '<div class="bub ai">'+Q.steps.map(function(st,i){return '<div class="hs"><span class="n">'+(i+1)+'</span><div><b>'+st.t+'</b>'+(st.f?'<div class="fig">'+st.f+'</div>':'')+'</div></div>'}).join('')+(Q.tip?'<p class="note">💡 '+Q.tip+'</p>':'')+'</div>'}
+function renderHelp(){var el=$('#v-help'),H=window.HELP||{qs:[],greet:''},log=ui.helpLog||[],h='<div class="helpchat">';
+  h+='<div class="row" style="margin:0 0 8px"><button data-act="nav" data-v="set">← '+t('設定にもどる')+'</button>'+(log.length?'<button data-act="helpClear">'+t('会話を消す')+'</button>':'')+'</div>';
+  h+=helpBub('ai',H.greet);
+  log.forEach(function(id,i){var Q=H.qs.filter(function(x){return x.id===id})[0];if(!Q)return;var last=(i===log.length-1);
+    h+='<div class="bub me"'+(last?' id="helpLast"':'')+'>'+Q.icon+' '+Q.q+'</div>';
+    h+=(last&&ui.helpTyping)?'<div class="bub ai"><span class="typing"><i></i><i></i><i></i></span></div>':helpAnswer(Q)});
+  if(!ui.helpTyping){h+='<div class="bub ai"><b>'+(log.length?'ほかに知りたいことは？':'どれが知りたい？')+'</b><div class="hq">'+H.qs.map(function(Q){return '<button data-act="helpAsk" data-id="'+Q.id+'">'+Q.icon+' '+Q.q+'</button>'}).join('')+(H.formUrl?'<a class="hqlink" href="'+H.formUrl+'" target="_blank" rel="noopener">💬 見つからないとき・要望を送る</a>':'')+'</div></div>'}
+  el.innerHTML=h+'</div>'}
 function renderSet(){var s=DB.set,h='';
+  h+='<div class="card"><button class="pri" data-act="nav" data-v="help" style="width:100%;min-height:44px;font-size:1rem">📖 '+t('使い方・よくある質問')+'</button></div>';
   h+='<div class="card"><h2>'+t('言語')+' / Language</h2><select data-set="lang"><option value="auto"'+(s.lang==='auto'?' selected':'')+'>'+t('端末の設定に合わせる')+' (Auto)</option>'+Object.keys(LANGS).map(function(k){return '<option value="'+k+'"'+(s.lang===k?' selected':'')+'>'+LANGS[k]+'</option>'}).join('')+'</select></div>';
   h+='<div class="card"><h2>'+t('ベースカラー')+'</h2><div class="swatches">'+Object.keys(THEMES).map(function(k){var on=(THEMES[s.theme]?s.theme:'green')===k;return '<button class="sw'+(on?' on':'')+'" data-act="theme" data-v="'+k+'" style="background:'+THEMES[k][1]+'" aria-label="'+esc(t(THEMES[k][0]))+'">'+(on?'✓':'')+'</button>'}).join('')+'</div><p class="note">'+t('アプリの基本の色を選べます。この端末だけの設定です。')+'</p></div>';
   h+='<div class="card"><h2>'+t('基本設定')+'</h2><label>'+t('氏名（新しい記録の初期値）')+'</label><input data-set="name" value="'+esc(s.name)+'">'

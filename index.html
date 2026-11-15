@@ -68,6 +68,26 @@ tfoot td,tfoot th{background:var(--soft);font-weight:bold}
 .li{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
 .li .m{flex:1;min-width:0;cursor:pointer}
 .swatches{display:flex;flex-wrap:wrap;gap:10px}.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;color:#fff;font-size:1.2rem;font-weight:700;padding:0}.sw.on{border-color:var(--text)}
+.helpchat .bub{max-width:92%;padding:9px 12px;border-radius:16px;margin:8px 0;line-height:1.5}
+.helpchat .bub.ai{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px;margin-right:auto}
+.helpchat .bub.me{background:var(--accent);color:var(--on);border-bottom-right-radius:4px;margin-left:auto;font-weight:700;scroll-margin-top:8px}
+.hs{display:flex;gap:8px;margin:10px 0}.hs>div{min-width:0;flex:1}
+.hs .n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on);text-align:center;font-weight:700;line-height:24px;font-size:.85rem;margin-top:1px}
+.hs .fig{margin-top:6px;padding:10px 8px;background:var(--soft);border-radius:10px;text-align:center}
+.hrow{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.hb{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:.85rem;background:var(--card)}
+.hb.on{background:var(--accent);color:var(--on)}
+.hb.tap,.hc.tap{outline:3px solid #e67e00;outline-offset:2px}
+.hc{display:inline-block;width:38px;height:38px;line-height:38px;text-align:center;font-weight:700;border-radius:5px}
+.hc.y{background:#f7d117;color:#222}.hc.r{background:#e0342b;color:#fff}.hc.b{background:#2a8be0;color:#fff}
+.hnav{display:flex;max-width:280px;margin:0 auto;background:#1a201d;border-radius:10px;overflow:hidden}
+.hnav span{flex:1;padding:4px 0;font-size:1.1rem;line-height:1.2;color:#9aa8a1}.hnav span small{font-size:.65rem}.hnav span.on{background:#242d29;color:var(--accent-d);font-weight:700}
+.hdots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.hdots i{width:26px;height:26px;border-radius:50%;display:block}
+.hq{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.hq button,.hqlink{text-align:left;min-height:42px;padding:.4em .8em;font-size:.95rem;border-radius:12px}
+.hqlink{display:block;border:1px solid var(--accent);color:var(--accent);text-decoration:none;line-height:1.9;background:var(--card)}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}.typing i{width:8px;height:8px;border-radius:50%;background:var(--sub);animation:tp 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tp{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .pbadge{display:inline-block;font-size:.75rem;font-weight:700;background:#d4a800;color:#fff;border-radius:6px;padding:1px 6px;margin-right:4px;vertical-align:middle}
 .li .m b{font-size:1.05rem}
 .li .m div{color:var(--sub);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -115,6 +135,7 @@ table.cal td{height:3em;vertical-align:top;padding:2px;font-size:.85rem}table.ca
   <section id="v-ana" class="view ana"></section>
   <section id="v-cal" class="view"></section>
   <section id="v-set" class="view"></section>
+  <section id="v-help" class="view"></section>
 </main>
 <nav>
   <button data-act="nav" data-v="rec" id="n-rec"><span>🎯</span><i data-i18n="記録"></i></button>
@@ -127,6 +148,7 @@ table.cal td{height:3em;vertical-align:top;padding:2px;font-size:.85rem}table.ca
 <div id="printArea"></div>
 <input type="file" id="file" accept=".json,application/json" hidden>
 <script src="i18n.js"></script>
+<script src="help.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

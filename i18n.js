@@ -5,6 +5,7 @@
    Missing keys fall back to the Japanese text. Simple, short wording is used on purpose. */
 window.I18N={};
 window.I18N.en={
+'使い方・よくある質問':'How to use / FAQ','使い方':'Help','設定にもどる':'Back to Settings','会話を消す':'Clear chat',
 'ベースカラー':'Base color','アプリの基本の色を選べます。この端末だけの設定です。':'Choose the main color of the app. This setting is for this device only.','グリーン':'Green','イエロー':'Yellow','ティール':'Teal','ブルー':'Blue','ネイビー':'Navy','パープル':'Purple','ピンク':'Pink','レッド':'Red','オレンジ':'Orange','ブラック':'Black',
 '練習':'Practice','試合':'Competition','練習か試合か':'Practice or competition','練習も試合も':'All',
 'アーチェリー スコア記録':'Archery Score',
