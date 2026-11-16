@@ -12,6 +12,12 @@ var SHEET_SET = '設定';
 var HEAD = ['受信日時', '名前', '日付', '種別', 'ラウンド', '大会名・場所', '順位', '合計', '満点', '本数', '10の数', 'Xの数', '回ごとの点数', 'ID'];
 var MAX_PER_POST = 300;
 
+/* 画面が出せない場所（エディタからの実行）でも止まらないように、メッセージは安全に出す */
+function msg_(a, b, c) {
+  try { var ui = SpreadsheetApp.getUi(); return (b === undefined) ? ui.alert(a) : ui.alert(a, b, c); }
+  catch (e) { Logger.log(a + (b ? ' ' + b : '')); return null; }
+}
+
 /* ---------- メニュー ---------- */
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('チーム設定')
@@ -40,7 +46,7 @@ function setup() {
   }
   var p = PropertiesService.getScriptProperties();
   if (!p.getProperty('TEAM_KEY')) p.setProperty('TEAM_KEY', randomKey_());
-  SpreadsheetApp.getUi().alert('初期設定ができました。\n\n次は、「設定」シートにチーム名を入れ、画面右上の「デプロイ」→「新しいデプロイ」でウェブアプリとして公開して、出たURLを「設定」シートに貼ってください。\n（くわしくは README.md）');
+  msg_('初期設定ができました。\n\n次は、「設定」シートにチーム名を入れ、画面右上の「デプロイ」→「新しいデプロイ」でウェブアプリとして公開して、出たURLを「設定」シートに貼ってください。\n（くわしくは README.md）');
 }
 
 function randomKey_() {
@@ -50,30 +56,30 @@ function randomKey_() {
 }
 
 function resetKey() {
-  var ui = SpreadsheetApp.getUi();
-  var r = ui.alert('合言葉を変えますか？', '変えると、今の招待リンクは使えなくなります。選手には新しい招待リンクを配り直してください。', ui.ButtonSet.OK_CANCEL);
-  if (r !== ui.Button.OK) return;
+  var ui0 = SpreadsheetApp.getUi();
+  var r = ui0.alert('合言葉を変えますか？', '変えると、今の招待リンクは使えなくなります。選手には新しい招待リンクを配り直してください。', ui0.ButtonSet.OK_CANCEL);
+  if (r !== ui0.Button.OK) return;
   PropertiesService.getScriptProperties().setProperty('TEAM_KEY', randomKey_());
-  ui.alert('合言葉を変えました。「② 招待リンクを作る」で、新しいリンクを作ってください。');
+  msg_('合言葉を変えました。「② 招待リンクを作る」で、新しいリンクを作ってください。');
 }
 
 /* ---------- 招待リンク ---------- */
 function makeInviteLink() {
-  var ss = SpreadsheetApp.getActive(), st = ss.getSheetByName(SHEET_SET), ui = SpreadsheetApp.getUi();
-  if (!st) { ui.alert('先に「① 初期設定」を実行してください。'); return; }
+  var ss = SpreadsheetApp.getActive(), st = ss.getSheetByName(SHEET_SET);
+  if (!st) { msg_('先に「① 初期設定」を実行してください。'); return; }
   var name = String(st.getRange('B1').getValue()).trim();
   var url = String(st.getRange('B2').getValue()).trim();
-  if (!name || name.indexOf('ここに') === 0) { ui.alert('「設定」シートの B1 に、チーム名を入れてください。'); return; }
+  if (!name || name.indexOf('ここに') === 0) { msg_('「設定」シートの B1 に、チーム名を入れてください。'); return; }
   if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_\-]+\/exec$/.test(url)) {
-    ui.alert('「設定」シートの B2 に、ウェブアプリのURLを貼ってください。\n（https://script.google.com/macros/s/…/exec の形）'); return;
+    msg_('「設定」シートの B2 に、ウェブアプリのURLを貼ってください。\n（https://script.google.com/macros/s/…/exec の形）'); return;
   }
   var key = PropertiesService.getScriptProperties().getProperty('TEAM_KEY');
-  if (!key) { ui.alert('先に「① 初期設定」を実行してください。'); return; }
+  if (!key) { msg_('先に「① 初期設定」を実行してください。'); return; }
   var json = JSON.stringify({ u: url, k: key, n: name });
   var enc = Utilities.base64EncodeWebSafe(Utilities.newBlob(json).getBytes()).replace(/=+$/, '');
   var link = APP_URL + '#team=' + enc;
   st.getRange('B3').setValue(link);
-  ui.alert('招待リンクを「設定」シートの B3 に書きました。\n選手に、このリンクを送ってください（LINEなど）。\n\n※このリンクを知っている人は、チームの記録を送ったり見たりできます。チームの外には渡さないでください。');
+  msg_('招待リンクを「設定」シートの B3 に書きました。\n選手に、このリンクを送ってください（LINEなど）。\n\n※このリンクを知っている人は、チームの記録を送ったり見たりできます。チームの外には渡さないでください。');
 }
 
 /* ---------- アプリからの受け口 ---------- */
@@ -85,6 +91,10 @@ function keyOk_(k) {
 function clean_(v, n) {
   v = String(v == null ? '' : v).replace(/[\r\n\t]+/g, ' ').slice(0, n || 80);
   return /^[=+\-@]/.test(v) ? "'" + v : v;   // 数式として動かないようにする
+}
+function fmtDate_(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]') return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(v == null ? '' : v);
 }
 function num_(v) { var x = Number(v); return isFinite(x) ? x : ''; }
 
@@ -130,6 +140,6 @@ function doGet(e) {
   var sh = SpreadsheetApp.getActive().getSheetByName(SHEET_REC);
   if (!sh || sh.getLastRow() < 2) return json_({ ok: true, recs: [] });
   var v = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
-  var out = v.map(function (r) { return { n: r[1], d: r[2], k: r[3], r: r[4], p: r[5], rk: r[6], t: r[7], m: r[8] }; });
+  var out = v.map(function (r) { return { n: r[1], d: fmtDate_(r[2]), k: r[3], r: r[4], p: r[5], rk: r[6], t: r[7], m: r[8] }; });
   return json_({ ok: true, recs: out.slice(-2000) });
 }
