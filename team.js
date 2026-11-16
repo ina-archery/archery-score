@@ -6,7 +6,7 @@
 'use strict';
 var A=window.__A; if(!A)return;
 var t=A.t, TK='archery_team_v1', DK='archery_announce_seen';
-var COPYRIGHT='© 2026 Archery Score';
+var COPYRIGHT='© 2026 M.Inamoto';
 
 /* ---------- English text (other languages fall back to Japanese) ---------- */
 (function(){var en=window.I18N&&window.I18N.en; if(!en)return;

@@ -1,4 +1,4 @@
-Archery Score  (c) 2026 Archery Score. All rights reserved.
+Archery Score  (c) 2026 M.Inamoto. All rights reserved.
 
 You may use this app for your own archery scoring, free of charge.
 You may not copy, modify, redistribute, or publish this app's source code or
