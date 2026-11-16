@@ -20,6 +20,7 @@ h1{font-size:1.15rem;margin:6px 0 2px}
 .bar i.cur{background:var(--accent);opacity:.55}
 .step{font-size:.85rem;color:var(--sub);margin:0}
 h2{font-size:1.2rem;margin:2px 0 8px}
+h3{font-size:1.05rem;margin:18px 0 4px;padding-top:10px;border-top:1px solid var(--soft)}
 .big{display:block;width:100%;min-height:54px;margin:10px 0 0;border-radius:12px;border:2px solid var(--accent);background:var(--card);color:var(--accent);font:inherit;font-weight:bold;font-size:1.05rem;cursor:pointer;text-align:center;text-decoration:none;padding:12px;touch-action:manipulation}
 .big.pri{background:var(--accent);color:var(--on)}
 .big:disabled{opacity:.4}
@@ -50,31 +51,38 @@ var APP=new URL('./',location.href).href;
 var KEY='archery_leader_v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-var S=load(); S.step=S.step||0; S.csv=S.csv||''; S.form=S.form||''; S.name=S.name||'';
+var S=load(); S.step=Math.min(S.step||0,3); S.csv=S.csv||''; S.form=S.form||''; S.name=S.name||'';
 function b64e(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function formId(v){var m=/forms\/d\/e\/([A-Za-z0-9_\-]+)/.exec(v||'');return m&&/^1FAIpQL[A-Za-z0-9_\-]{20,}$/.test(m[1])?m[1]:null}
 function csvId(v){var m=/spreadsheets\/d\/e\/([A-Za-z0-9_\-]+)\/pub/.exec(v||'');return m&&/^2PACX-[A-Za-z0-9_\-]{20,}$/.test(m[1])?m[1]:null}
-var TOTAL=7;
+function shId(v){var m=/spreadsheets\/d\/([A-Za-z0-9_\-]{30,60})/.exec(v||'');return m&&!/^2PACX/.test(m[1])?m[1]:null}
+function okSheet(v){return !!(csvId(v)||shId(v))}
+var TOTAL=4;
+function sortIn(tx,pref){tx=(tx||'').trim();if(!tx)return;if(formId(tx))S.form=tx;else if(okSheet(tx))S.csv=tx;else S[pref]=tx}
+function box(k,label,ex,val,ok,bad){
+ var h='<div class="hint" style="margin-top:14px"><b>'+label+'</b><br>'+ex+'</div><button class="big" data-paste="'+k+'">📋 コピーしたリンクを貼る</button><textarea id="'+k+'In" rows="2" placeholder="ここに貼ってもかまいません">'+esc(val)+'</textarea>';
+ if(val)h+=ok?'<p class="ok">✅ リンクを確認できました</p>':'<p class="ng">'+bad+'</p>';
+ return h}
 var steps=[
- function(){return '<p class="step">はじめに</p><h2>用意するもの</h2><ul style="padding-left:1.2em;margin:6px 0"><li>Googleアカウント（Gmailなど）</li><li>スマホかパソコン</li><li>10分ほどの時間</li></ul><div class="hint">🔒 記録は、<b>あなたのGoogleのスプレッドシート</b>にだけ入ります。アプリの作者には届きません。他のチームにも見えません。</div><button class="big pri" data-go="1">はじめる</button>'},
- function(){return '<p class="step">手順 1 / 6</p><h2>フォームをコピーする</h2><p>下のボタンを押すと、新しい画面が開きます。そこで、青い <span class="mark">コピーを作成</span> を押してください。</p><button class="big pri" data-open="'+TPL_COPY+'">① フォームをコピー</button><p class="note">Googleにログインしていないときは、ログインの画面が出ます。</p>'+nav(1,true)},
- function(){return '<p class="step">手順 2 / 6</p><h2>フォームを公開する</h2><p>コピーされたフォームの、右上の青い <span class="mark">公開</span> を押します。出てきた画面で、もう一度 <span class="mark">公開</span> を押してください。</p><div class="hint">「公開」を押さないと、選手の記録を受け取れません。</div>'+nav(2,true)},
- function(){return '<p class="step">手順 3 / 6</p><h2>回答をスプレッドシートに集める</h2><ol><li>フォームの上の <span class="mark">回答</span> を押します。</li><li><span class="mark">スプレッドシートにリンク</span> を押します。</li><li><span class="mark">作成</span> を押します。</li></ol><p>スプレッドシートが開きます。そのまま次へ進んでください。</p>'+nav(3,true)},
+ function(){return '<p class="step">はじめに</p><h2>用意するもの</h2><ul style="padding-left:1.2em;margin:6px 0"><li>Googleアカウント（Gmailなど）</li><li>スマホかパソコン（見やすいほうでOK）</li><li>10分ほどの時間</li></ul><div class="hint">🔒 記録は、<b>あなたのGoogleのスプレッドシート</b>にだけ入ります。アプリの作者には届きません。他のチームにも見えません。</div><div class="hint">💡 このページは<b>開いたままにして</b>、Googleは<b>別の画面（タブ）</b>で開きます。パソコンなら、2つの画面を並べると、迷いません。スマホなら、ホーム画面の切り替えで行き来します。</div><button class="big pri" data-go="1">はじめる</button>'},
+ function(){return '<p class="step">手順 1 / 3</p><h2>Googleで準備する（まとめて）</h2><p>先に、下のボタンでGoogleを<b>別の画面</b>で開きます。このページは閉じないでください。</p><button class="big pri" data-open="'+TPL_COPY+'">① Googleでフォームをコピーする</button><div class="hint">開いた画面で、青い <span class="mark">コピーを作成</span> を押します。そのあとは、下の ② から順番に進めてください。</div>'
+  +'<h3>② フォームを公開する</h3><p>コピーされたフォーム（<b>紫色</b>の画面）の、右上の <span class="mark">公開</span> を押します。出てきた画面でも、もう一度 <span class="mark">公開</span> を押します。</p>'
+  +'<h3>③ 回答をスプレッドシートに集める</h3><p>フォームの上の <span class="mark">回答</span> → <span class="mark">スプレッドシートにリンク</span> → <span class="mark">作成</span> を押します。<b>緑色</b>のスプレッドシートが開きます。</p>'
+  +'<h3>④ スプレッドシートを共有する</h3><p>開いた<b>緑色</b>の画面で：</p><ol><li>右上の <span class="mark">共有</span>（人のマーク）を押す</li><li><span class="mark">一般的なアクセス</span> を、<span class="mark">リンクを知っている全員</span> にする</li><li>右の役割は <span class="mark">閲覧者</span> のままにする（<b>編集者にしない</b>）</li><li><span class="mark">リンクをコピー</span> を押して、メモ帳かLINEの「自分だけのトーク」に貼っておく</li></ol>'
+  +'<h3>⑤ フォームのリンクをコピーする</h3><p><b>紫色</b>のフォームの画面に戻って：右上の <span class="mark">鎖のマーク</span> → <span class="mark">コピー</span> を押します。このリンクも、メモに貼っておきます。</p>'
+  +'<div class="hint">これで、リンクが2つできました。<br>・<b>spreadsheets</b> で始まるリンク（④）<br>・<b>forms</b> で始まるリンク（⑤）<br>次の画面で、この2つを貼ります。</div>'+nav(1,true)},
  function(){
-  var id=csvId(S.csv),h='<p class="step">手順 4 / 6</p><h2>スプレッドシートを公開する</h2><p>開いたスプレッドシートで、</p><ol><li>上の <span class="mark">ファイル</span> → <span class="mark">共有</span> → <span class="mark">ウェブに公開</span></li><li>右の欄を <span class="mark">カンマ区切り形式（.csv）</span> にする</li><li><span class="mark">公開する</span> を押す</li><li>出てきた長いリンクを <b>コピー</b> する</li></ol><button class="big" data-paste="csv">📋 コピーしたリンクを貼る</button><textarea id="csvIn" rows="2" placeholder="ここにリンクを貼っても大丈夫です">'+esc(S.csv)+'</textarea>';
-  h+=S.csv?(id?'<p class="ok">✅ リンクを確認できました</p>':'<p class="ng">このリンクは違うようです。「ウェブに公開」で出た、<b>pub</b> を含むリンクを貼ってください。</p>'):'';
-  return h+nav(4,!!id)},
+  var f=formId(S.form),c=okSheet(S.csv),h='<p class="step">手順 2 / 3</p><h2>2つのリンクを貼る</h2><p>メモなどからコピーして、下に貼ります。どちらの欄に貼っても、自動で正しい欄に入ります。</p>';
+  h+=box('csv','① スプレッドシートのリンク','<b>docs.google.com/spreadsheets/…</b> で始まる（④でコピーしたもの）',S.csv,!!c,'これは違うリンクです。④の「共有」でコピーした、<b>spreadsheets</b> で始まるリンクを貼ってください。');
+  h+=box('form','② フォームのリンク','<b>forms</b> で始まる（⑤で出たもの）',S.form,!!f,'これは違うリンクです。⑤の鎖のマークで出た、<b>forms</b> で始まるリンクを貼ってください。');
+  return h+nav(2,!!(f&&c))},
  function(){
-  var id=formId(S.form),h='<p class="step">手順 5 / 6</p><h2>フォームのリンクをコピーする</h2><p>フォームの画面に戻って、右上の <span class="mark">鎖のマーク（回答者へのリンクをコピー）</span> を押します。</p><button class="big" data-paste="form">📋 コピーしたリンクを貼る</button><textarea id="formIn" rows="2" placeholder="ここにリンクを貼っても大丈夫です">'+esc(S.form)+'</textarea>';
-  h+=S.form?(id?'<p class="ok">✅ リンクを確認できました</p>':'<p class="ng">このリンクは違うようです。<b>docs.google.com/forms/d/e/…</b> の形のリンクを貼ってください。</p>'):'';
-  return h+nav(5,!!id)},
- function(){
-  var f=formId(S.form),c=csvId(S.csv),nm=(S.name||'').trim(),h='<p class="step">手順 6 / 6</p><h2>チームの招待リンクを作る</h2><p>チームの名前を入れてください。</p><input id="nameIn" maxlength="40" placeholder="例：○○大学アーチェリー部" value="'+esc(S.name)+'">';
-  if(f&&c&&nm){var link=APP+'#team='+b64e({f:f,c:c,n:nm}),msg='Archery Score のチーム「'+nm+'」に入るリンクです。開いて「入る」を押してください。\n'+link;
+  var f=formId(S.form),c=okSheet(S.csv),nm=(S.name||'').trim(),h='<p class="step">手順 3 / 3</p><h2>チームの招待リンクを作る</h2><p>チームの名前を入れてください。</p><input id="nameIn" maxlength="40" placeholder="例：○○大学アーチェリー部" value="'+esc(S.name)+'">';
+  if(f&&c&&nm){var link=APP+'#team='+b64e(csvId(S.csv)?{f:f,c:csvId(S.csv),n:nm}:{f:f,s:shId(S.csv),n:nm}),msg='Archery Score のチーム「'+nm+'」に入るリンクです。開いて「入る」を押してください。\n'+link;
    h+='<p class="ok">🎉 できました！ このリンクを選手に送ります。</p><textarea id="linkOut" rows="4" readonly>'+esc(link)+'</textarea><button class="big pri" data-copy="'+esc(link)+'">📋 リンクをコピー</button><a class="big pri" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?'+encodeURIComponent(msg)+'">💬 LINEで送る</a><button class="big" data-share="'+esc(link)+'|'+esc(nm)+'">📤 ほかのアプリで送る</button><div class="hint"><b>選手には、こう伝えてください：</b><br>① リンクを開く → 「入る」を押す<br>② アプリの「設定」→「チームで共有」で、名前を入れて「このチームに送る」をON</div><p class="note">⚠ このリンクは、チームの人だけに送ってください。リンクを知っている人は、記録を送ったり見たりできます。</p>'}
   else h+='<p class="note">名前を入れると、招待リンクができます。</p>';
-  return h+'<div class="row"><button class="big" data-go="5">← 戻る</button></div>'}
+  return h+'<div class="row"><button class="big" data-go="2">← 戻る</button></div>'}
 ];
 function nav(i,ok){return '<div class="row"><button class="big" data-go="'+(i-1)+'">← 戻る</button><button class="big pri" '+(ok?'':'disabled')+' data-go="'+(i+1)+'">できた → 次へ</button></div>'}
 function render(){
@@ -88,7 +96,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-go],
   if(b.dataset.go!=null){go(+b.dataset.go)}
   else if(b.dataset.open){window.open(b.dataset.open,'_blank','noopener')}
   else if(b.dataset.paste){var k=b.dataset.paste;
-    if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(tx){S[k]=tx.trim();save();render()},function(){flash('貼り付けできませんでした。下の欄に貼ってください')})}
+    if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(tx){sortIn(tx,k);save();render()},function(){flash('貼り付けできませんでした。下の欄に貼ってください')})}
     else flash('下の欄に貼ってください')}
   else if(b.dataset.copy){var tx=b.dataset.copy,ok=function(){flash('コピーしました')};
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(ok,function(){var a=document.getElementById('linkOut');if(a){a.select();document.execCommand('copy');ok()}});
@@ -96,8 +104,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-go],
   else if(b.dataset.share){var p=b.dataset.share.split('|');if(navigator.share)navigator.share({title:'Archery Score',text:'Archery Score のチーム「'+p[1]+'」に入るリンクです。開いて「入る」を押してください。',url:p[0]}).catch(function(){});else flash('「リンクをコピー」を使ってください')}
 });
 document.addEventListener('input',function(e){var x=e.target;
-  if(x.id==='csvIn'){S.csv=x.value.trim();save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
-  else if(x.id==='formIn'){S.form=x.value.trim();save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
+  if(x.id==='csvIn'){sortIn(x.value,'csv');save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
+  else if(x.id==='formIn'){sortIn(x.value,'form');save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
   else if(x.id==='nameIn'){S.name=x.value;save();clearTimeout(window.__t);window.__t=setTimeout(function(){var el=document.getElementById('nameIn'),pos=el.selectionStart;render();var n=document.getElementById('nameIn');n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}},600)}});
 render();
 })();

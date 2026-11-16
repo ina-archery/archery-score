@@ -72,6 +72,8 @@ function b64e(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).re
 function okUrl(u){return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_\-]+\/exec$/.test(u||'')}
 // Google Form (answers) + published CSV of its response sheet
 function okFormId(s){return /^1FAIpQL[A-Za-z0-9_\-]{20,}$/.test(s||'')}
+function okSheetId(s){return /^[A-Za-z0-9_-]{30,60}$/.test(s||'')&&!/^2PACX/.test(s)&&!/^1FAIpQL/.test(s)}
+function sheetUrl(s){return 'https://docs.google.com/spreadsheets/d/'+s+'/gviz/tq?tqx=out:csv&headers=1'}
 function okCsvId(s){return /^2PACX-[A-Za-z0-9_\-]{20,}$/.test(s||'')}
 var FORM_ENTRY=['1529727742','602911474','456751206','1475056120','1307010073','1550011119','883440597','233074447','304304810','1107829433','1052275598','1134505227','25997494','1369288163'];
 // order: 名前,日付,種別,ラウンド,大会名・場所,順位,1回目,2回目,3回目,4回目,合計,10の数,Xの数,ID
@@ -98,11 +100,11 @@ function readJoin(){
   var cleaned=function(){try{history.replaceState(null,'',location.pathname)}catch(e){}};
   var o=null;try{o=JSON.parse(b64d(m[1]))}catch(e){}
   cleaned();
-  var isForm=o&&okFormId(o.f)&&okCsvId(o.c)&&o.n, isOld=o&&okUrl(o.u)&&o.k&&o.n;
+  var isForm=o&&okFormId(o.f)&&(okCsvId(o.c)||okSheetId(o.s))&&o.n, isOld=o&&okUrl(o.u)&&o.k&&o.n;
   if(!isForm&&!isOld){A.flash(t('招待リンクが正しくありません'));return}
   A.uiDlg({msg:t('このチームに入りますか？')+'\n'+o.n,okLabel:t('入る'),onOk:function(){
     var base={n:String(o.n).slice(0,40),on:false,name:(A.DB().set.name||'')};
-    setTeam(isForm?Object.assign(base,{f:o.f,c:o.c}):Object.assign(base,{u:o.u,k:o.k}));
+    setTeam(isForm?Object.assign(base,{f:o.f,c:(okCsvId(o.c)?o.c:undefined),s:(okSheetId(o.s)?o.s:undefined)}):Object.assign(base,{u:o.u,k:o.k}));
     A.flash(t('入る'));A.render()}});
 }
 
@@ -146,8 +148,8 @@ function pushAll(){
 var board=null;
 function loadBoard(){
   var T=team();if(!T)return;board='loading';A.render();
-  if(T.c){
-    fetch(csvUrl(T.c)+'&t='+Date.now(),{redirect:'follow'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(tx){
+  if(T.c||T.s){
+    fetch((T.c?csvUrl(T.c)+'&t=':sheetUrl(T.s)+'&t=')+Date.now(),{redirect:'follow'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(tx){
       var rows=parseCsv(tx),h=rows.shift()||[],ix=function(n){return h.indexOf(n)},seen={};
       var iN=ix('名前'),iD=ix('日付'),iK=ix('種別'),iR=ix('ラウンド'),iP=ix('大会名・場所'),iRk=ix('順位'),iT=ix('合計'),iI=ix('ID');
       rows.forEach(function(r){if(!r[iN])return;seen[r[iN]+'|'+(r[iI]||Math.random())]={n:r[iN],d:r[iD],k:r[iK],r:r[iR],p:r[iP],rk:r[iRk],t:+r[iT]||0}});
