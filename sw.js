@@ -1,6 +1,6 @@
 /* Service worker: lets the app work offline after the first visit.
    VERSION is replaced with a build stamp by tools/release.js. Change it on every release so phones update. */
-const VERSION='20261116-2230';
+const VERSION='20261116-2300';
 const CACHE='archery-'+VERSION;
 const FILES=['./','./index.html','./app.js','./i18n.js','./i18n.zhs.js','./i18n.zht.js','./i18n.ko.js','./i18n.fr.js','./i18n.de.js','./i18n.it.js','./i18n.es.js','./i18n.pt.js','./help.js','./team.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-180.png'];
 self.addEventListener('install',e=>{

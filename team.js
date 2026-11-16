@@ -28,7 +28,23 @@ var COPYRIGHT='© 2026 M.Inamoto';
  '最近の記録':'Recent records','自己ベスト':'Personal best','件':' records',
  'お知らせ':'Notice','閉じる':'Close','開く':'Open',
  '無断での複製・再配布・改変を禁じます。個人での利用は自由です。':'Copying, redistribution and modification without permission are prohibited. Personal use is free.',
- 'チームから抜けますか？':'Leave this team?'
+ 'チームから抜けますか？':'Leave this team?',
+ '使い方（代表と選手）':'How to use (leader and players)',
+ '選手：チームに入る':'Players: join a team',
+ '代表から届いたリンクを開きます。':'Open the link sent by your team leader.',
+ '「このチームに入りますか？」で「入る」を押します。':'Tap "Join" when asked "Join this team?".',
+ 'この画面で、表示する名前を入れて、「このチームに送る」をONにします。':'On this screen, enter your display name and turn ON "Send my records to this team".',
+ 'そのあと、記録を保存するたびに、自動でチームに送られます。':'After that, each saved record is sent to the team automatically.',
+ '代表：チームを作る（最初に1回・10分ほど）':'Leader: create a team (once, about 10 minutes)',
+ 'Googleドライブで、新しいスプレッドシートを作ります。':'Create a new spreadsheet in Google Drive.',
+ 'メニュー「拡張機能」→「Apps Script」を開きます。':'Open the menu Extensions → Apps Script.',
+ '下の「スクリプトをコピー」を押します。Apps Script の画面で、最初のコードを全部消して貼り付け、保存します。':'Tap "Copy script" below. In Apps Script, delete the original code, paste, and save.',
+ 'スプレッドシートを読み込み直し、メニュー「チーム設定」→「① 初期設定」を押します。最初に「許可」の確認が出ます。':'Reload the spreadsheet, then choose the menu "チーム設定" → "① 初期設定". Allow the permission request the first time.',
+ '「設定」シートの B1 に、チーム名を入れます。':'In the "設定" sheet, enter the team name in B1.',
+ 'Apps Script の右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。次のユーザーとして実行は「自分」、アクセスできるユーザーは「全員」にして「デプロイ」。出たURLをコピーして、「設定」シートの B2 に貼ります。':'In Apps Script, tap Deploy → New deployment → type "Web app". Execute as "Me", access "Anyone", then Deploy. Copy the URL and paste it into B2 of the "設定" sheet.',
+ 'メニュー「チーム設定」→「② 招待リンクを作る」を押します。B3 に出たリンクを、LINEなどで選手に送ります。':'Choose the menu "チーム設定" → "② 招待リンクを作る". Send the link shown in B3 to your players (for example by LINE).',
+ 'スクリプトをコピー':'Copy script',
+ '招待リンクは、チームの人だけに送ってください。外にもれたときは、メニュー「チーム設定」→「合言葉を変える」で、リンクを作り直せます。':'Send the invitation link only to your team. If it leaks, change the key from the menu "チーム設定" → "合言葉を変える" and make a new link.'
  });
 })();
 
@@ -104,12 +120,42 @@ function boardHtml(){
   return h+'</tbody></table>';
 }
 
+/* ---------- how to use (written inside the app) ---------- */
+var guideOpen=false;
+function guideHtml(){
+  var L=function(a){return '<li style="margin:4px 0">'+a+'</li>'};
+  var h='<details data-guide style="margin-top:8px"'+(guideOpen?' open':'')+'><summary style="cursor:pointer;font-weight:bold;color:var(--accent)">📖 '+t('使い方（代表と選手）')+'</summary>';
+  h+='<h2 style="margin-top:10px">'+t('選手：チームに入る')+'</h2><ol style="padding-left:1.3em;margin:4px 0">'
+   +L(t('代表から届いたリンクを開きます。'))
+   +L(t('「このチームに入りますか？」で「入る」を押します。'))
+   +L(t('この画面で、表示する名前を入れて、「このチームに送る」をONにします。'))
+   +'</ol><p class="note">'+t('そのあと、記録を保存するたびに、自動でチームに送られます。')+'</p>';
+  h+='<h2 style="margin-top:12px">'+t('代表：チームを作る（最初に1回・10分ほど）')+'</h2><ol style="padding-left:1.3em;margin:4px 0">'
+   +L(t('Googleドライブで、新しいスプレッドシートを作ります。'))
+   +L(t('メニュー「拡張機能」→「Apps Script」を開きます。'))
+   +L(t('下の「スクリプトをコピー」を押します。Apps Script の画面で、最初のコードを全部消して貼り付け、保存します。'))
+   +L(t('スプレッドシートを読み込み直し、メニュー「チーム設定」→「① 初期設定」を押します。最初に「許可」の確認が出ます。'))
+   +L(t('「設定」シートの B1 に、チーム名を入れます。'))
+   +L(t('Apps Script の右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。次のユーザーとして実行は「自分」、アクセスできるユーザーは「全員」にして「デプロイ」。出たURLをコピーして、「設定」シートの B2 に貼ります。'))
+   +L(t('メニュー「チーム設定」→「② 招待リンクを作る」を押します。B3 に出たリンクを、LINEなどで選手に送ります。'))
+   +'</ol><div class="row"><button data-team-act="copyScript">'+t('スクリプトをコピー')+'</button></div>'
+   +'<p class="note">'+t('招待リンクは、チームの人だけに送ってください。外にもれたときは、メニュー「チーム設定」→「合言葉を変える」で、リンクを作り直せます。')+'</p>';
+  return h+'</details>';
+}
+function copyScript(){
+  fetch('team-kit/team-sheet.gs',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(tx){
+    var done=function(){A.flash(t('コピーしました'))};
+    var fb=function(){A.uiDlg({msg:t('コピーしてください'),input:{value:tx,textarea:true},noCancel:true})};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(done,fb);else fb()
+  }).catch(function(){A.flash(t('送れませんでした（電波と招待リンクを確認してください）'))});
+}
+
 /* ---------- cards shown on the settings screen ---------- */
 function cards(){
   var T=team(),h='';
   h+='<div class="card"><h2>🔒 '+t('データについて')+'</h2><p class="note" style="font-size:.9rem"><b>'+t('記入したデータは作者には届きません。記録はこの端末の中に保存されます。作者のサーバーはありません。')+'</b></p><p class="note">'+t('チームで共有を使う場合だけ、保存した記録が、あなたのチームの代表が用意したスプレッドシートに送られます。送った内容は、そのチームの人だけが見られます。作者や他のチームには見えません。')+'</p></div>';
   h+='<div class="card"><h2>👥 '+t('チームで共有')+'</h2>';
-  if(!T){h+='<p class="note">'+t('チームに入っていません。代表から届いた招待リンクを開くと、ここに表示されます。')+'</p></div>'}
+  if(!T){h+='<p class="note">'+t('チームに入っていません。代表から届いた招待リンクを開くと、ここに表示されます。')+'</p>'+guideHtml()+'</div>'}
   else{
     h+='<p class="note">'+t('チーム名')+'：<b>'+esc(T.n)+'</b></p>'
      +'<label>'+t('表示する名前')+'</label><input data-team="name" value="'+esc(T.name||'')+'" maxlength="30">'
@@ -117,7 +163,7 @@ function cards(){
      +'<p class="note">'+t('ONにすると、記録を保存するたびに、次の内容を代表のスプレッドシートに送ります：名前・日付・ラウンド・大会名・場所・順位・各回の点数・合計・10の数・Xの数。的のどこに当たったかは送りません。')+'</p>'
      +'<div class="row"><button data-team-act="all">'+t('今ある記録をすべて送る')+'</button><button data-team-act="board">'+t('チームの成績を見る')+'</button></div>'
      +boardHtml()
-     +'<div class="row"><button class="warn" data-team-act="leave">'+t('チームから抜ける')+'</button></div></div>'}
+     +'<div class="row"><button class="warn" data-team-act="leave">'+t('チームから抜ける')+'</button></div>'+guideHtml()+'</div>'}
   h+='<p class="note" style="text-align:center;margin:14px 0 0"><b style="font-size:1rem;color:var(--text)">Let\'s keep score!</b><br>'+COPYRIGHT+'<br>'+t('無断での複製・再配布・改変を禁じます。個人での利用は自由です。')+'</p>';
   return h;
 }
@@ -125,11 +171,13 @@ function cards(){
 document.addEventListener('click',function(e){var b=e.target.closest('[data-team-act]');if(!b)return;var a=b.dataset.teamAct;
   if(a==='all')pushAll();
   else if(a==='board')loadBoard();
+  else if(a==='copyScript')copyScript();
   else if(a==='leave')A.uiDlg({msg:t('チームから抜けますか？'),danger:true,okLabel:t('チームから抜ける'),onOk:function(){setTeam(null);board=null;A.flash(t('チームから抜けました（送った記録は代表のスプレッドシートに残ります）'));A.render()}})});
 document.addEventListener('change',function(e){var x=e.target;if(!x.dataset||!x.dataset.team)return;var T=team();if(!T)return;
   if(x.dataset.team==='on'){
     if(x.checked&&!(T.name||'').trim()){x.checked=false;A.flash(t('名前を入れてください'));return}
     T.on=!!x.checked;setTeam(T)}});
+document.addEventListener('toggle',function(e){if(e.target&&e.target.hasAttribute&&e.target.hasAttribute('data-guide'))guideOpen=e.target.open},true);
 document.addEventListener('input',function(e){var x=e.target;if(!x.dataset||x.dataset.team!=='name')return;var T=team();if(!T)return;T.name=x.value;setTeam(T)});
 
 /* ---------- announcements (announce.json on the same site; never cached) ---------- */
