@@ -118,7 +118,7 @@ function cards(){
      +'<div class="row"><button data-team-act="all">'+t('今ある記録をすべて送る')+'</button><button data-team-act="board">'+t('チームの成績を見る')+'</button></div>'
      +boardHtml()
      +'<div class="row"><button class="warn" data-team-act="leave">'+t('チームから抜ける')+'</button></div></div>'}
-  h+='<p class="note" style="text-align:center;margin:14px 0 0">'+COPYRIGHT+'<br>'+t('無断での複製・再配布・改変を禁じます。個人での利用は自由です。')+'</p>';
+  h+='<p class="note" style="text-align:center;margin:14px 0 0"><b style="font-size:1rem;color:var(--text)">Let\'s keep score!</b><br>'+COPYRIGHT+'<br>'+t('無断での複製・再配布・改変を禁じます。個人での利用は自由です。')+'</p>';
   return h;
 }
 
