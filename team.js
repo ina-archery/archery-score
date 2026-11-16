@@ -43,7 +43,16 @@ var COPYRIGHT='© 2026 M.Inamoto';
  '「設定」シートの B1 に、チーム名を入れます。':'In the "設定" sheet, enter the team name in B1.',
  'Apps Script の右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。次のユーザーとして実行は「自分」、アクセスできるユーザーは「全員」にして「デプロイ」。出たURLをコピーして、「設定」シートの B2 に貼ります。':'In Apps Script, tap Deploy → New deployment → type "Web app". Execute as "Me", access "Anyone", then Deploy. Copy the URL and paste it into B2 of the "設定" sheet.',
  'メニュー「チーム設定」→「② 招待リンクを作る」を押します。B3 に出たリンクを、LINEなどで選手に送ります。':'Choose the menu "チーム設定" → "② 招待リンクを作る". Send the link shown in B3 to your players (for example by LINE).',
- 'スクリプトをコピー':'Copy script',
+ '下の「フォームをコピー」を押して、開いた画面の「コピーを作成」を押します。':'Tap "Copy form" below, then tap "Make a copy" on the page that opens.',
+ 'コピーしたフォームの右上「公開」を押して、もう一度「公開」を押します。':'In the copied form, tap "Publish" at the top right, then "Publish" again.',
+ 'フォームの上の「回答」→「スプレッドシートにリンク」→「作成」を押します。':'At the top of the form, tap Responses → Link to Sheets → Create.',
+ '開いたスプレッドシートで、「ファイル」→「共有」→「ウェブに公開」を押し、右の欄を「カンマ区切り形式（.csv）」にして「公開する」を押します。出たリンクをコピーします。':'In the spreadsheet, choose File → Share → Publish to web, set the right box to "Comma-separated values (.csv)", and tap Publish. Copy the link.',
+ 'フォームの画面に戻り、右上の「回答者へのリンクをコピー」（鎖のマーク）でフォームのリンクをコピーします。':'Back in the form, tap "Copy responder link" (chain icon) at the top right to copy the form link.',
+ '下の欄に、2つのリンクを貼って、チーム名を入れ、「招待リンクを作る」を押します。出たリンクを、LINEなどで選手に送ります。':'Paste the two links below, enter the team name, and tap "Make invitation link". Send the link to your players (for example by LINE).',
+ 'フォームをコピー':'Copy form','フォームのリンク':'Form link','スプレッドシートの公開リンク（CSV）':'Published spreadsheet link (CSV)','招待リンクを作る':'Make invitation link','招待リンク':'Invitation link','招待リンクをコピー':'Copy invitation link',
+ 'フォームのリンクが正しくありません。「回答者へのリンクをコピー」で出るリンクを貼ってください。':'The form link is not valid. Paste the link from "Copy responder link".',
+ 'スプレッドシートの公開リンクが正しくありません。「ウェブに公開」で出たリンク（pubを含むもの）を貼ってください。':'The published spreadsheet link is not valid. Paste the link from "Publish to web" (it contains "pub").',
+ '招待リンクは、チームの人だけに送ってください。リンクを知っている人は、チームの記録を送ったり見たりできます。同じ記録を直して保存し直すと、スプレッドシートに行が増えます（アプリには最新の分が出ます）。':'Send the invitation link only to your team. Anyone with the link can send and see the team\'s records. If you fix and save the same record again, a new row is added to the spreadsheet (the app shows the latest one).',
  '招待リンクは、チームの人だけに送ってください。外にもれたときは、メニュー「チーム設定」→「合言葉を変える」で、リンクを作り直せます。':'Send the invitation link only to your team. If it leaks, change the key from the menu "チーム設定" → "合言葉を変える" and make a new link.'
  });
 })();
@@ -57,6 +66,22 @@ function b64d(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='='
 function b64e(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 // Only the team leader's own Apps Script address is accepted
 function okUrl(u){return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_\-]+\/exec$/.test(u||'')}
+// Google Form (answers) + published CSV of its response sheet
+function okFormId(s){return /^1FAIpQL[A-Za-z0-9_\-]{20,}$/.test(s||'')}
+function okCsvId(s){return /^2PACX-[A-Za-z0-9_\-]{20,}$/.test(s||'')}
+var FORM_ENTRY=['1529727742','602911474','456751206','1475056120','1307010073','1550011119','883440597','233074447','304304810','1107829433','1052275598','1134505227','25997494','1369288163'];
+// order: 名前,日付,種別,ラウンド,大会名・場所,順位,1回目,2回目,3回目,4回目,合計,10の数,Xの数,ID
+function formUrl(f){return 'https://docs.google.com/forms/d/e/'+f+'/formResponse'}
+function csvUrl(c){return 'https://docs.google.com/spreadsheets/d/e/'+c+'/pub?output=csv'}
+var TPL_COPY='https://docs.google.com/forms/d/1uJ7fcYiR81g40UguXlBm7wpG5GDjIt82QxJaEJVbu6Q/copy';
+function parseCsv(tx){var rows=[],row=[],f='',q=false,i=0,c;
+  for(;i<tx.length;i++){c=tx[i];
+    if(q){if(c==='"'){if(tx[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true; else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&tx[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}
+    else f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows}
 
 /* ---------- team state (kept apart from the records so it is not in backups) ---------- */
 function team(){return lsGet(TK,null)}
@@ -69,9 +94,11 @@ function readJoin(){
   var cleaned=function(){try{history.replaceState(null,'',location.pathname)}catch(e){}};
   var o=null;try{o=JSON.parse(b64d(m[1]))}catch(e){}
   cleaned();
-  if(!o||!okUrl(o.u)||!o.k||!o.n){A.flash(t('招待リンクが正しくありません'));return}
+  var isForm=o&&okFormId(o.f)&&okCsvId(o.c)&&o.n, isOld=o&&okUrl(o.u)&&o.k&&o.n;
+  if(!isForm&&!isOld){A.flash(t('招待リンクが正しくありません'));return}
   A.uiDlg({msg:t('このチームに入りますか？')+'\n'+o.n,okLabel:t('入る'),onOk:function(){
-    setTeam({u:o.u,k:o.k,n:String(o.n).slice(0,40),on:false,name:(A.DB().set.name||'')});
+    var base={n:String(o.n).slice(0,40),on:false,name:(A.DB().set.name||'')};
+    setTeam(isForm?Object.assign(base,{f:o.f,c:o.c}):Object.assign(base,{u:o.u,k:o.k}));
     A.flash(t('入る'));A.render()}});
 }
 
@@ -83,8 +110,19 @@ function summarize(S){
   var max=0;S.halves.forEach(function(h){h.ends.forEach(function(en){max+=en.length*10})});
   return {id:S.id,d:S.date||'',r:A.rl?A.rl(S):(S.roundLabel||S.round||''),p:S.place||'',k:S.purpose==='comp'?'試合':'練習',rk:S.rank||'',t:tot,tn:tens,x:xs,h:parts,_n:n};
 }
+function sendForm(T,payload,cb){
+  var who=(T.name||'').slice(0,30);
+  var jobs=payload.map(function(r){
+    var hs=Array.isArray(r.h)?r.h:[];
+    var vals=[who,r.d||'',r.k||'',r.r||'',r.p||'',r.rk||'',hs[0]?hs[0].s:'',hs[1]?hs[1].s:'',hs[2]?hs[2].s:'',hs[3]?hs[3].s:'',r.t,r.tn,r.x,r.id||''];
+    var body=new URLSearchParams();FORM_ENTRY.forEach(function(id,i){body.append('entry.'+id,String(vals[i]==null?'':vals[i]))});
+    return fetch(formUrl(T.f),{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
+  });
+  Promise.all(jobs).then(function(){cb&&cb(true)},function(){cb&&cb(false)});
+}
 function send(payload,cb){
   var T=team();if(!T){cb&&cb(false);return}
+  if(T.f){sendForm(T,payload,cb);return}
   var body=JSON.stringify({a:'put',k:T.k,who:(T.name||'').slice(0,30),rec:payload});
   fetch(T.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body,redirect:'follow'})
    .then(function(r){return r.json()}).then(function(j){cb&&cb(!!(j&&j.ok))}).catch(function(){cb&&cb(false)});
@@ -104,6 +142,13 @@ function pushAll(){
 var board=null;
 function loadBoard(){
   var T=team();if(!T)return;board='loading';A.render();
+  if(T.c){
+    fetch(csvUrl(T.c)+'&t='+Date.now(),{redirect:'follow'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(tx){
+      var rows=parseCsv(tx),h=rows.shift()||[],ix=function(n){return h.indexOf(n)},seen={};
+      var iN=ix('名前'),iD=ix('日付'),iK=ix('種別'),iR=ix('ラウンド'),iP=ix('大会名・場所'),iRk=ix('順位'),iT=ix('合計'),iI=ix('ID');
+      rows.forEach(function(r){if(!r[iN])return;seen[r[iN]+'|'+(r[iI]||Math.random())]={n:r[iN],d:r[iD],k:r[iK],r:r[iR],p:r[iP],rk:r[iRk],t:+r[iT]||0}});
+      board=Object.keys(seen).map(function(k){return seen[k]});A.render()}).catch(function(){board=[];A.render();A.flash(t('送れませんでした（電波と招待リンクを確認してください）'))});
+    return}
   fetch(T.u+'?a=board&k='+encodeURIComponent(T.k),{redirect:'follow'}).then(function(r){return r.json()}).then(function(j){
     board=(j&&j.ok)?j.recs:[];A.render()}).catch(function(){board=[];A.render();A.flash(t('送れませんでした（電波と招待リンクを確認してください）'))});
 }
@@ -131,23 +176,36 @@ function guideHtml(){
    +L(t('この画面で、表示する名前を入れて、「このチームに送る」をONにします。'))
    +'</ol><p class="note">'+t('そのあと、記録を保存するたびに、自動でチームに送られます。')+'</p>';
   h+='<h2 style="margin-top:12px">'+t('代表：チームを作る（最初に1回・10分ほど）')+'</h2><ol style="padding-left:1.3em;margin:4px 0">'
-   +L(t('Googleドライブで、新しいスプレッドシートを作ります。'))
-   +L(t('メニュー「拡張機能」→「Apps Script」を開きます。'))
-   +L(t('下の「スクリプトをコピー」を押します。Apps Script の画面で、最初のコードを全部消して貼り付け、保存します。'))
-   +L(t('スプレッドシートを読み込み直し、メニュー「チーム設定」→「① 初期設定」を押します。最初に「許可」の確認が出ます。'))
-   +L(t('「設定」シートの B1 に、チーム名を入れます。'))
-   +L(t('Apps Script の右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。次のユーザーとして実行は「自分」、アクセスできるユーザーは「全員」にして「デプロイ」。出たURLをコピーして、「設定」シートの B2 に貼ります。'))
-   +L(t('メニュー「チーム設定」→「② 招待リンクを作る」を押します。B3 に出たリンクを、LINEなどで選手に送ります。'))
-   +'</ol><div class="row"><button data-team-act="copyScript">'+t('スクリプトをコピー')+'</button></div>'
-   +'<p class="note">'+t('招待リンクは、チームの人だけに送ってください。外にもれたときは、メニュー「チーム設定」→「合言葉を変える」で、リンクを作り直せます。')+'</p>';
+   +L(t('下の「フォームをコピー」を押して、開いた画面の「コピーを作成」を押します。'))
+   +L(t('コピーしたフォームの右上「公開」を押して、もう一度「公開」を押します。'))
+   +L(t('フォームの上の「回答」→「スプレッドシートにリンク」→「作成」を押します。'))
+   +L(t('開いたスプレッドシートで、「ファイル」→「共有」→「ウェブに公開」を押し、右の欄を「カンマ区切り形式（.csv）」にして「公開する」を押します。出たリンクをコピーします。'))
+   +L(t('フォームの画面に戻り、右上の「回答者へのリンクをコピー」（鎖のマーク）でフォームのリンクをコピーします。'))
+   +L(t('下の欄に、2つのリンクを貼って、チーム名を入れ、「招待リンクを作る」を押します。出たリンクを、LINEなどで選手に送ります。'))
+   +'</ol><div class="row"><button data-team-act="openTpl">'+t('フォームをコピー')+'</button></div>'
+   +'<label>'+t('フォームのリンク')+'</label><input id="tm_form" placeholder="https://docs.google.com/forms/d/e/…/viewform">'
+   +'<label>'+t('スプレッドシートの公開リンク（CSV）')+'</label><input id="tm_csv" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv">'
+   +'<label>'+t('チーム名')+'</label><input id="tm_name" maxlength="40">'
+   +'<div class="row"><button class="pri" data-team-act="makeLink">'+t('招待リンクを作る')+'</button></div>'
+   +'<div id="tm_out"></div>'
+   +'<p class="note">'+t('招待リンクは、チームの人だけに送ってください。リンクを知っている人は、チームの記録を送ったり見たりできます。同じ記録を直して保存し直すと、スプレッドシートに行が増えます（アプリには最新の分が出ます）。')+'</p>';
   return h+'</details>';
 }
-function copyScript(){
-  fetch('team-kit/team-sheet.gs',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(tx){
-    var done=function(){A.flash(t('コピーしました'))};
-    var fb=function(){A.uiDlg({msg:t('コピーしてください'),input:{value:tx,textarea:true},noCancel:true})};
-    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(done,fb);else fb()
-  }).catch(function(){A.flash(t('送れませんでした（電波と招待リンクを確認してください）'))});
+function makeInvite(){
+  var fv=($('#tm_form')||{}).value||'',cv=($('#tm_csv')||{}).value||'',nm=(($('#tm_name')||{}).value||'').trim();
+  var f=(/forms\/d\/e\/([A-Za-z0-9_\-]+)/.exec(fv)||[])[1],c=(/spreadsheets\/d\/e\/([A-Za-z0-9_\-]+)\/pub/.exec(cv)||[])[1];
+  var out=$('#tm_out');if(!out)return;
+  if(!okFormId(f)){out.innerHTML='<p class="note" style="color:var(--warn)">'+esc(t('フォームのリンクが正しくありません。「回答者へのリンクをコピー」で出るリンクを貼ってください。'))+'</p>';return}
+  if(!okCsvId(c)){out.innerHTML='<p class="note" style="color:var(--warn)">'+esc(t('スプレッドシートの公開リンクが正しくありません。「ウェブに公開」で出たリンク（pubを含むもの）を貼ってください。'))+'</p>';return}
+  if(!nm){out.innerHTML='<p class="note" style="color:var(--warn)">'+esc(t('チーム名を入れてください'))+'</p>';return}
+  var link=location.origin+location.pathname+'#team='+b64e({f:f,c:c,n:nm});
+  out.innerHTML='<label>'+t('招待リンク')+'</label><textarea id="tm_link" rows="3" readonly style="width:100%">'+esc(link)+'</textarea><div class="row"><button data-team-act="copyLink">'+t('招待リンクをコピー')+'</button></div>';
+}
+function copyLink(){
+  var tx=(($('#tm_link')||{}).value)||'';if(!tx)return;
+  var done=function(){A.flash(t('コピーしました'))};
+  var fb=function(){var e=$('#tm_link');if(e){e.select();try{document.execCommand('copy');done()}catch(x){A.uiDlg({msg:t('コピーしてください'),input:{value:tx,textarea:true},noCancel:true})}}};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(done,fb);else fb();
 }
 
 /* ---------- cards shown on the settings screen ---------- */
@@ -171,7 +229,9 @@ function cards(){
 document.addEventListener('click',function(e){var b=e.target.closest('[data-team-act]');if(!b)return;var a=b.dataset.teamAct;
   if(a==='all')pushAll();
   else if(a==='board')loadBoard();
-  else if(a==='copyScript')copyScript();
+  else if(a==='openTpl')window.open(TPL_COPY,'_blank','noopener');
+  else if(a==='makeLink')makeInvite();
+  else if(a==='copyLink')copyLink();
   else if(a==='leave')A.uiDlg({msg:t('チームから抜けますか？'),danger:true,okLabel:t('チームから抜ける'),onOk:function(){setTeam(null);board=null;A.flash(t('チームから抜けました（送った記録は代表のスプレッドシートに残ります）'));A.render()}})});
 document.addEventListener('change',function(e){var x=e.target;if(!x.dataset||!x.dataset.team)return;var T=team();if(!T)return;
   if(x.dataset.team==='on'){
