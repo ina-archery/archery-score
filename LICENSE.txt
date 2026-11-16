@@ -1,0 +1,17 @@
+Archery Score  (c) 2026 Archery Score. All rights reserved.
+
+You may use this app for your own archery scoring, free of charge.
+You may not copy, modify, redistribute, or publish this app's source code or
+design (in whole or in part), or offer a copy of it as your own, without
+written permission from the author.
+
+The team sharing kit (team-kit/team-sheet.gs) may be copied into a team
+leader's own Google account for the purpose of running that team's own
+spreadsheet.
+
+このアプリは、自分のアーチェリーの記録のために、無料で使えます。
+作者の書面による許可なく、ソースコードやデザインの全部または一部を複製・改変・
+再配布・公開したり、自分のものとして提供したりすることを禁じます。
+
+チーム共有キット（team-kit/team-sheet.gs）は、チーム代表が自分のGoogleアカウントに
+コピーして、そのチーム専用のスプレッドシートを運営するために使えます。

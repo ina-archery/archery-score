@@ -308,7 +308,7 @@ var ACT={
  dlgKind:function(b){ui.dlgKind=b.dataset.v;openNew(true)},
  rgrp:function(b){var cur=readDlg()||{};cur.round=b.dataset.v;cur.per=undefined;ui.dlgVals=cur;openNew()},
  open:function(b){DB.cur=b.dataset.id;save();ui.all=false;ui.past=true;ui.tgView=null;show('rec')},
- saveRec:function(){save();flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
+ saveRec:function(){save();if(window.TEAM)try{TEAM.push(curS())}catch(e){}flash((ui.past||stat(curS()).done)?t('上書き保存しました'):t('保存しました。履歴に入っています'));ui.past=false;show('hist')},
  togPur:function(b){var S=DB.sessions.filter(function(s){return s.id===b.dataset.id})[0];if(!S)return;S.purpose=(purp(S)==='comp'?'practice':'comp');save();render()},
  del:function(b){var id=b.dataset.id;uiDlg({msg:t('この記録を削除しますか？（元に戻せません）'),okLabel:t('削除'),danger:true,onOk:function(){DB.sessions=DB.sessions.filter(function(s){return s.id!==id});if(DB.cur===id)DB.cur=null;save();render()}})},
  histPur:function(b){ui.histPur=b.dataset.v;render()},
@@ -675,6 +675,7 @@ function renderSet(){var s=DB.set,h='';
    +'<p class="note">'+t('記録数: {0}件',DB.sessions.length)+'</p></div>';
   h+='<div class="card"><h2>'+t('ルールの反映（アーチェリー競技規則）')+'</h2><ul class="note" style="padding-left:1.2em;margin:0"><li>'+t('矢がラインに触れていれば高い得点')+'</li><li>'+t('X＝インナー10。同点は アウトドア：X数→10数、インドア：10数→9数')+'</li><li>'+t('6リング標的面は5点未満、三つ目は6点未満、的の外はM')+'</li><li>'+t('コンパウンドのインドアは内側の小さい輪が10点')+'</li><li>'+t('エンド完了後は高い得点順に記入（設定で切替）')+'</li><li>'+t('対戦：セット制(2/1/0点)と累計制、シュートオフ対応')+'</li></ul>'
    +'<p class="note">'+t('※三つ目で同じ的に複数の矢が入った場合の「最低得点のみ採点（他はM）」は自動適用していません。審判の判定に従って手で直してください。')+'</p></div>';
+  if(window.TEAM)h+=TEAM.cards();
   h+='<div class="card" style="margin-top:56px;border:2px solid var(--warn)"><h2 style="color:var(--warn)">'+t('リセット')+'</h2><p class="note">'+t('記録と予定をすべて消します（設定は残ります）。押しても、すぐには消えません。確認が2回出ます。')+'</p><div class="row"><button class="warn" data-act="resetDlg">'+t('リセットする…')+'</button></div></div><div style="height:40px"></div>';
   $('#v-set').innerHTML=h}
 $('#file').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(String(r.result).replace(/^﻿/,''));if(!d.sessions)throw 0;
@@ -698,5 +699,5 @@ if('serviceWorker' in navigator&&!NATIVE&&/^https?:$/.test(location.protocol)){
 if(!DB.cur&&DB.sessions.length)DB.cur=DB.sessions[DB.sessions.length-1].id;
 show('rec');
 (function(){var lastL=isLand(),tm=null;function chk(){clearTimeout(tm);tm=setTimeout(function(){var n=isLand();if(n!==lastL){lastL=n;ui.scrollSbs=null;if(ui.view==='rec')render()}},150)}window.addEventListener('resize',chk);window.addEventListener('orientationchange',chk)})();
-window.__A={DB:function(){return DB},scoreAt:scoreAt,FACES:FACES,ROUNDS:ROUNDS,MKINDS:MKINDS,BOWS:BOWS,LANGS:LANGS,t:t,setLang:function(l){LANG=l;render()}};
+window.__A={DB:function(){return DB},render:function(){render()},uiDlg:uiDlg,flash:flash,rl:rl,scoreAt:scoreAt,FACES:FACES,ROUNDS:ROUNDS,MKINDS:MKINDS,BOWS:BOWS,LANGS:LANGS,t:t,setLang:function(l){LANG=l;render()}};
 })();
