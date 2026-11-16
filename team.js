@@ -65,7 +65,7 @@ function summarize(S){
   var tot=0,n=0,tens=0,xs=0,parts=[];
   S.halves.forEach(function(h){var q=0;h.ends.forEach(function(en){en.forEach(function(a){if(!a)return;q+=a.s;n++;if(a.s===10){tens++;if(a.x)xs++}})});tot+=q;parts.push({d:h.d,s:q})});
   var max=0;S.halves.forEach(function(h){h.ends.forEach(function(en){max+=en.length*10})});
-  return {id:S.id,d:S.date||'',r:A.rl?A.rl(S):(S.roundLabel||S.round||''),p:S.place||'',k:S.purpose==='comp'?'試合':'練習',rk:S.rank||'',t:tot,m:max,n:n,tn:tens,x:xs,h:parts};
+  return {id:S.id,d:S.date||'',r:A.rl?A.rl(S):(S.roundLabel||S.round||''),p:S.place||'',k:S.purpose==='comp'?'試合':'練習',rk:S.rank||'',t:tot,tn:tens,x:xs,h:parts,_n:n};
 }
 function send(payload,cb){
   var T=team();if(!T){cb&&cb(false);return}
@@ -75,12 +75,12 @@ function send(payload,cb){
 }
 function push(S,quiet){
   var T=team();if(!T||!T.on||!T.name)return;
-  var rec=summarize(S);if(!rec||rec.n===0)return;
+  var rec=summarize(S);if(!rec||rec._n===0)return;delete rec._n;
   send([rec],function(ok){if(!quiet)A.flash(ok?t('送りました'):t('送れませんでした（電波と招待リンクを確認してください）'))});
 }
 function pushAll(){
   var T=team();if(!T||!T.name){A.flash(t('名前を入れてください'));return}
-  var recs=A.DB().sessions.map(summarize).filter(function(x){return x&&x.n>0});
+  var recs=A.DB().sessions.map(summarize).filter(function(x){return x&&x._n>0}).map(function(x){delete x._n;return x});
   send(recs,function(ok){A.flash(ok?t('送りました')+' ('+recs.length+')':t('送れませんでした（電波と招待リンクを確認してください）'))});
 }
 
@@ -98,9 +98,9 @@ function boardHtml(){
   var best={};board.forEach(function(r){var k=r.n+'|'+r.r;if(!best[k]||r.t>best[k].t)best[k]=r});
   var rows=Object.keys(best).map(function(k){return best[k]}).sort(function(a,b){return (a.r>b.r?1:a.r<b.r?-1:b.t-a.t)});
   var h='<h2 style="margin-top:10px">'+t('自己ベスト')+'</h2><table style="width:100%;border-collapse:collapse"><tbody>';
-  rows.forEach(function(r){h+='<tr><td style="padding:3px 4px;border-top:1px solid var(--line)">'+esc(r.n)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);font-size:.8rem">'+esc(r.r)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);text-align:right"><b>'+esc(r.t)+'</b>/'+esc(r.m)+'</td></tr>'});
+  rows.forEach(function(r){h+='<tr><td style="padding:3px 4px;border-top:1px solid var(--line)">'+esc(r.n)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);font-size:.8rem">'+esc(r.r)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);text-align:right"><b>'+esc(r.t)+'</b></td></tr>'});
   h+='</tbody></table><h2 style="margin-top:10px">'+t('最近の記録')+'</h2><table style="width:100%;border-collapse:collapse"><tbody>';
-  board.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).slice(0,15).forEach(function(r){h+='<tr><td style="padding:3px 4px;border-top:1px solid var(--line);font-size:.8rem">'+esc(r.d)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line)">'+esc(r.n)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);text-align:right">'+esc(r.t)+'/'+esc(r.m)+'</td></tr>'});
+  board.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).slice(0,15).forEach(function(r){h+='<tr><td style="padding:3px 4px;border-top:1px solid var(--line);font-size:.8rem">'+esc(r.d)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line)">'+esc(r.n)+'</td><td style="padding:3px 4px;border-top:1px solid var(--line);text-align:right">'+esc(r.t)+'</td></tr>'});
   return h+'</tbody></table>';
 }
 

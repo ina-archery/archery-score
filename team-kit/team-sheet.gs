@@ -9,7 +9,8 @@
 var APP_URL = 'https://ina-archery.github.io/archery-score/';
 var SHEET_REC = '記録';
 var SHEET_SET = '設定';
-var HEAD = ['受信日時', '名前', '日付', '種別', 'ラウンド', '大会名・場所', '順位', '合計', '満点', '本数', '10の数', 'Xの数', '回ごとの点数', 'ID'];
+var HEAD = ['受信日時', '名前', '日付', '種別', 'ラウンド', '大会名・場所', '順位', '1回目', '2回目', '3回目', '4回目', '合計', '10の数', 'Xの数', 'ID'];
+var ID_COL = 15;
 var MAX_PER_POST = 300;
 
 /* 画面が出せない場所（エディタからの実行）でも止まらないように、メッセージは安全に出す */
@@ -112,15 +113,16 @@ function doPost(e) {
     var recs = b.rec.slice(0, MAX_PER_POST);
     var last = sh.getLastRow(), idx = {};
     if (last > 1) {
-      var ids = sh.getRange(2, 2, last - 1, 1).getValues(), idv = sh.getRange(2, 14, last - 1, 1).getValues();
+      var ids = sh.getRange(2, 2, last - 1, 1).getValues(), idv = sh.getRange(2, ID_COL, last - 1, 1).getValues();
       for (var i = 0; i < ids.length; i++) idx[ids[i][0] + '|' + idv[i][0]] = i + 2;
     }
     var now = new Date();
     recs.forEach(function (r) {
       var id = clean_(r.id, 40);
       if (!id) return;
-      var parts = (Array.isArray(r.h) ? r.h : []).map(function (p) { return clean_(p.d, 12) + ':' + num_(p.s); }).join(' / ');
-      var row = [now, who, clean_(r.d, 12), clean_(r.k, 6), clean_(r.r, 60), clean_(r.p, 60), clean_(r.rk, 6), num_(r.t), num_(r.m), num_(r.n), num_(r.tn), num_(r.x), clean_(parts, 160), id];
+      var hs = Array.isArray(r.h) ? r.h : [];
+      var pt = [0, 1, 2, 3].map(function (i) { return hs[i] ? num_(hs[i].s) : ''; });   // 1回目〜4回目の点数
+      var row = [now, who, clean_(r.d, 12), clean_(r.k, 6), clean_(r.r, 60), clean_(r.p, 60), clean_(r.rk, 6), pt[0], pt[1], pt[2], pt[3], num_(r.t), num_(r.tn), num_(r.x), id];
       var key = who + '|' + id;
       if (idx[key]) sh.getRange(idx[key], 1, 1, HEAD.length).setValues([row]);
       else { sh.appendRow(row); idx[key] = sh.getLastRow(); }
@@ -140,6 +142,6 @@ function doGet(e) {
   var sh = SpreadsheetApp.getActive().getSheetByName(SHEET_REC);
   if (!sh || sh.getLastRow() < 2) return json_({ ok: true, recs: [] });
   var v = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
-  var out = v.map(function (r) { return { n: r[1], d: fmtDate_(r[2]), k: r[3], r: r[4], p: r[5], rk: r[6], t: r[7], m: r[8] }; });
+  var out = v.map(function (r) { return { n: r[1], d: fmtDate_(r[2]), k: r[3], r: r[4], p: r[5], rk: r[6], t: r[11] }; });
   return json_({ ok: true, recs: out.slice(-2000) });
 }
