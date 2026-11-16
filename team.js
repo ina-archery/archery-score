@@ -49,6 +49,10 @@ var COPYRIGHT='© 2026 M.Inamoto';
  '開いたスプレッドシートで、「ファイル」→「共有」→「ウェブに公開」を押し、右の欄を「カンマ区切り形式（.csv）」にして「公開する」を押します。出たリンクをコピーします。':'In the spreadsheet, choose File → Share → Publish to web, set the right box to "Comma-separated values (.csv)", and tap Publish. Copy the link.',
  'フォームの画面に戻り、右上の「回答者へのリンクをコピー」（鎖のマーク）でフォームのリンクをコピーします。':'Back in the form, tap "Copy responder link" (chain icon) at the top right to copy the form link.',
  '下の欄に、2つのリンクを貼って、チーム名を入れ、「招待リンクを作る」を押します。出たリンクを、LINEなどで選手に送ります。':'Paste the two links below, enter the team name, and tap "Make invitation link". Send the link to your players (for example by LINE).',
+ '代表：チームを作る':'Leader: create a team',
+ 'ボタンを押しながら進められる、かんたん手順のページがあります。10分ほどで、招待リンクまで作れます。':'There is a simple step-by-step page. In about 10 minutes you can make the invitation link.',
+ '代表の方はこちら（かんたん手順）':'Team leaders: open the easy steps',
+ '招待リンクは、チームの人だけに送ってください。リンクを知っている人は、チームの記録を送ったり見たりできます。':'Send the invitation link only to your team. Anyone with the link can send and see the team\'s records.',
  'フォームをコピー':'Copy form','フォームのリンク':'Form link','スプレッドシートの公開リンク（CSV）':'Published spreadsheet link (CSV)','招待リンクを作る':'Make invitation link','招待リンク':'Invitation link','招待リンクをコピー':'Copy invitation link',
  'フォームのリンクが正しくありません。「回答者へのリンクをコピー」で出るリンクを貼ってください。':'The form link is not valid. Paste the link from "Copy responder link".',
  'スプレッドシートの公開リンクが正しくありません。「ウェブに公開」で出たリンク（pubを含むもの）を貼ってください。':'The published spreadsheet link is not valid. Paste the link from "Publish to web" (it contains "pub").',
@@ -175,20 +179,9 @@ function guideHtml(){
    +L(t('「このチームに入りますか？」で「入る」を押します。'))
    +L(t('この画面で、表示する名前を入れて、「このチームに送る」をONにします。'))
    +'</ol><p class="note">'+t('そのあと、記録を保存するたびに、自動でチームに送られます。')+'</p>';
-  h+='<h2 style="margin-top:12px">'+t('代表：チームを作る（最初に1回・10分ほど）')+'</h2><ol style="padding-left:1.3em;margin:4px 0">'
-   +L(t('下の「フォームをコピー」を押して、開いた画面の「コピーを作成」を押します。'))
-   +L(t('コピーしたフォームの右上「公開」を押して、もう一度「公開」を押します。'))
-   +L(t('フォームの上の「回答」→「スプレッドシートにリンク」→「作成」を押します。'))
-   +L(t('開いたスプレッドシートで、「ファイル」→「共有」→「ウェブに公開」を押し、右の欄を「カンマ区切り形式（.csv）」にして「公開する」を押します。出たリンクをコピーします。'))
-   +L(t('フォームの画面に戻り、右上の「回答者へのリンクをコピー」（鎖のマーク）でフォームのリンクをコピーします。'))
-   +L(t('下の欄に、2つのリンクを貼って、チーム名を入れ、「招待リンクを作る」を押します。出たリンクを、LINEなどで選手に送ります。'))
-   +'</ol><div class="row"><button data-team-act="openTpl">'+t('フォームをコピー')+'</button></div>'
-   +'<label>'+t('フォームのリンク')+'</label><input id="tm_form" placeholder="https://docs.google.com/forms/d/e/…/viewform">'
-   +'<label>'+t('スプレッドシートの公開リンク（CSV）')+'</label><input id="tm_csv" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv">'
-   +'<label>'+t('チーム名')+'</label><input id="tm_name" maxlength="40">'
-   +'<div class="row"><button class="pri" data-team-act="makeLink">'+t('招待リンクを作る')+'</button></div>'
-   +'<div id="tm_out"></div>'
-   +'<p class="note">'+t('招待リンクは、チームの人だけに送ってください。リンクを知っている人は、チームの記録を送ったり見たりできます。同じ記録を直して保存し直すと、スプレッドシートに行が増えます（アプリには最新の分が出ます）。')+'</p>';
+  h+='<h2 style="margin-top:12px">'+t('代表：チームを作る')+'</h2><p class="note" style="font-size:.95rem">'+t('ボタンを押しながら進められる、かんたん手順のページがあります。10分ほどで、招待リンクまで作れます。')+'</p>'
+   +'<div class="row"><button class="pri" data-team-act="openLeader" style="min-height:48px;font-size:1rem">'+t('代表の方はこちら（かんたん手順）')+'</button></div>'
+   +'<p class="note">'+t('招待リンクは、チームの人だけに送ってください。リンクを知っている人は、チームの記録を送ったり見たりできます。')+'</p>';
   return h+'</details>';
 }
 function makeInvite(){
@@ -229,6 +222,7 @@ function cards(){
 document.addEventListener('click',function(e){var b=e.target.closest('[data-team-act]');if(!b)return;var a=b.dataset.teamAct;
   if(a==='all')pushAll();
   else if(a==='board')loadBoard();
+  else if(a==='openLeader')window.open('leader.html','_blank');
   else if(a==='openTpl')window.open(TPL_COPY,'_blank','noopener');
   else if(a==='makeLink')makeInvite();
   else if(a==='copyLink')copyLink();
