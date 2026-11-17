@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>代表を交代するとき | Archery Score</title>
+<style>
+:root{--bg:#f3f5f4;--card:#fff;--text:#1d2723;--sub:#5d6b65;--line:#d5dcd8;--accent:#14532d;--on:#fff;--ok:#1a8f4c;--warn:#c0392b;--soft:#e8efeb}
+@media (prefers-color-scheme:dark){:root{--bg:#101412;--card:#1a201d;--text:#e8eeea;--sub:#9aa8a1;--line:#2f3a35;--accent:#4cc27e;--on:#08130d;--soft:#242d29}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.7 "Meiryo","Yu Gothic UI","Hiragino Sans",sans-serif;padding:12px 14px 60px}
+main{max-width:560px;margin:0 auto}
+h1{font-size:1.15rem;margin:6px 0 2px}
+.sub{color:var(--sub);font-size:.88rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.bar{display:flex;gap:6px;margin:8px 0 12px}
+.bar i{flex:1;height:8px;border-radius:5px;background:var(--line)}
+.bar i.on{background:var(--accent)}
+.bar i.cur{background:var(--accent);opacity:.55}
+.step{font-size:.85rem;color:var(--sub);margin:0}
+h2{font-size:1.2rem;margin:2px 0 8px}
+h3{font-size:1.05rem;margin:18px 0 4px;padding-top:10px;border-top:1px solid var(--soft)}
+.big{display:block;width:100%;min-height:54px;margin:10px 0 0;border-radius:12px;border:2px solid var(--accent);background:var(--card);color:var(--accent);font:inherit;font-weight:bold;font-size:1.05rem;cursor:pointer;text-align:center;text-decoration:none;padding:12px;touch-action:manipulation}
+.big.pri{background:var(--accent);color:var(--on)}
+.big:disabled{opacity:.4}
+.row{display:flex;gap:10px;margin-top:6px}.row .big{margin-top:8px}
+.note{color:var(--sub);font-size:.88rem;margin:8px 0 0}
+.mark{display:inline-block;background:var(--soft);border-radius:6px;padding:0 .4em;font-weight:bold}
+input,textarea{width:100%;font:inherit;padding:.55em .6em;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);margin-top:6px}
+.ok{color:var(--ok);font-weight:bold;margin:6px 0 0}
+.ng{color:var(--warn);margin:6px 0 0;font-size:.92rem}
+ol{padding-left:1.3em;margin:6px 0}
+.hint{background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0 0;font-size:.92rem}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>🔁 代表を交代するとき</h1>
+<p class="sub">チームの記録は、代表のGoogleのスプレッドシートに入っています。代表が変わるときの手順です。</p>
+<div class="card">
+<p>どちらですか？</p>
+<button class="big pri" data-show="A">A. 今の代表と連絡が取れる<br><span style="font-weight:normal;font-size:.9rem">（おすすめ・選手は何もしなくてOK）</span></button>
+<button class="big" data-show="B">B. 連絡が取れない・Aができない</button>
+</div>
+<div id="A" class="card" hidden>
+<h2>A. 所有者を渡す</h2>
+<div class="hint">フォームとスプレッドシートの「持ち主」を、新しい代表に変えます。リンクは変わらないので、<b>選手のアプリも、招待リンクも、そのまま使えます。</b></div>
+<h3>今の代表がやること</h3>
+<ol>
+<li>Googleドライブ（drive.google.com）を開く。</li>
+<li>「チームスコア」のフォームと、その回答のスプレッドシート（「…（回答）」）を探す。<b>2つとも</b>やります。</li>
+<li>ファイルを右クリック（スマホは <span class="mark">︙</span>）→ <span class="mark">共有</span> を押す。</li>
+<li>新しい代表のメールアドレスを入れて、<span class="mark">編集者</span> で追加する。</li>
+<li>もう一度 <span class="mark">共有</span> を開き、新しい代表の名前の右の <span class="mark">編集者</span> を押して、<span class="mark">オーナー権限を譲渡</span>（または「オーナーにする」）を選ぶ。</li>
+<li>確認が出たら、承認する。</li>
+</ol>
+<h3>新しい代表がやること</h3>
+<ol>
+<li>届いたメール（または、ドライブの通知）の、<span class="mark">承認</span> を押す。フォームとシート、<b>2つとも</b>です。</li>
+<li>次の3つを確認する：
+<ul style="padding-left:1.2em;margin:4px 0">
+<li>フォームを開いて、<span class="mark">回答</span> で「回答を受け付ける」がONのまま。</li>
+<li>スプレッドシートの <span class="mark">共有</span> で、「リンクを知っている全員」・<span class="mark">閲覧者</span> のまま。</li>
+<li>アプリの「設定」→「チームで共有」→「このチームの招待リンクを出す」で、リンクが出る。</li>
+</ul></li>
+</ol>
+<div class="hint">⚠ 会社や学校のGoogleアカウントが関わると、所有者の変更が止められていることがあります。そのときは、Bにしてください。</div>
+<div class="hint">💡 次に備えて、<b>副代表</b>（もう1人）を、フォームとスプレッドシートの編集者に入れておくと、安心です。</div>
+</div>
+<div id="B" class="card" hidden>
+<h2>B. 新しく作り直す</h2>
+<div class="hint">新しい代表が、フォームとスプレッドシートを新しく作ります。選手は、<b>新しい招待リンク</b>を開き直します。</div>
+<h3>新しい代表がやること</h3>
+<ol>
+<li><a href="leader.html">かんたん手順のページ</a>を、最初からやる。新しい招待リンクができます。</li>
+<li>（できれば）古いスプレッドシートを開いて、<span class="mark">ファイル</span> → <span class="mark">コピーを作成</span> を押す。コピーを、新しいシートに足す。古い記録を引き継げます。見られないときは、飛ばしてください。</li>
+<li>新しい招待リンクを、チームの選手に送る。「<b>このリンクを開き直してください</b>」と伝える。</li>
+</ol>
+<h3>選手がやること</h3>
+<ol>
+<li>新しい招待リンクを開く。</li>
+<li>「同じ名前のチームがあります。入れ替えますか？」と出たら、<span class="mark">入れ替える</span> を押す。</li>
+<li>表示する名前と「このチームに送る」は、前の設定を引き継ぎます。</li>
+</ol>
+<div class="hint">⚠ 新しいリンクに入れ替えるまで、選手の記録は、古いシートに送られ続けます。早めに、チームに知らせてください。</div>
+</div>
+<p class="note" style="text-align:center"><a href="./">← アプリにもどる</a></p>
+<p class="note" style="text-align:center;margin-top:18px">Let's keep score!<br>© 2026 M.Inamoto</p>
+</main>
+<script>
+document.addEventListener('click',function(e){var b=e.target.closest('[data-show]');if(!b)return;
+ ['A','B'].forEach(function(k){document.getElementById(k).hidden=(k!==b.dataset.show)});
+ document.getElementById(b.dataset.show).scrollIntoView({behavior:'smooth'})});
+</script>
+</body>
+</html>
