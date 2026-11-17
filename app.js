@@ -77,6 +77,7 @@ var ZC={10:'#f7d117',9:'#f7d117',8:'#e0342b',7:'#e0342b',6:'#2a8be0',5:'#2a8be0'
 var KEY='archery_pro_v1';
 var DB=load();
 LANG=pickLang(DB.set.lang);
+setTimeout(function(){try{var ch=false;DB.sessions.forEach(function(S){if(S&&S.type==='score'&&S.bow==='compound'&&S.halves&&S.halves.some(function(h){return faceFor(h.f,"compound",h.d)!==h.f})&&S.halves.every(function(h){return h.ends.every(function(en){return en.every(function(x){return !x})})})){applyBow(S);ch=true}});if(ch)save()}catch(e){}},0);
 var THEMES={green:['グリーン','#14532d','#4cc27e'],yellow:['イエロー','#b98a00','#f5c518','#1d1d1d'],teal:['ティール','#0f766e','#4fd1c5'],blue:['ブルー','#1d4ed8','#6ea8fe'],navy:['ネイビー','#1e3a5f','#7aa7e0'],purple:['パープル','#6d28d9','#b794f6'],pink:['ピンク','#be185d','#f472b6'],red:['レッド','#b3261e','#ff8a80'],orange:['オレンジ','#c2570c','#ffa94d'],black:['ブラック','#2b2b2b','#8a948f']};
 function lumY(h){var n=parseInt(h.slice(1),16);return 0.299*((n>>16)&255)+0.587*((n>>8)&255)+0.114*(n&255)}
 function mixHex(h,tc,t){var a=parseInt(h.slice(1),16),b=parseInt(tc.slice(1),16),o=0;for(var sh=16;sh>=0;sh-=8){var x=(a>>sh)&255,y=(b>>sh)&255;o=(o<<8)|Math.max(0,Math.min(255,Math.round(x+(y-x)*t)))}return '#'+('000000'+o.toString(16)).slice(-6)}
@@ -116,6 +117,13 @@ function cls(a){return a?'s'+a.s:''}
 function f2(n){return (Math.round(n*100)/100).toFixed(2)}
 function maxArrows(S){return S.halves.reduce(function(t,h){return t+h.ends.reduce(function(u,en){return u+en.length},0)},0)}
 function faceOf(h){return FACES[h.f]||FACES['122']}
+// compound indoor: only the small inner ring is 10 (the rest of the yellow ring is 9) -> use the compound variant of the face
+var TOCOMP={'60':'60c','40':'40c','40t':'40tc','40tr':'40trc'},FROMCOMP={'60c':'60','40c':'40','40tc':'40t','40trc':'40tr','80-6':'80'};
+function faceFor(f,bow,d){if(bow==='compound'){if(f==='80'&&/^50m?$/i.test(String(d||'').trim()))return '80-6';return TOCOMP[f]||f}return FROMCOMP[f]||f}
+// switch an existing record to the faces of the chosen bow and score again the arrows that have a position
+function applyBow(S){
+  S.halves.forEach(function(h){var nf=faceFor(h.f,S.bow,h.d);if(nf===h.f)return;h.f=nf;var F=FACES[nf],R=(11-F.min)*F.rw,ar=R*0.034*(F.spots>1?1.3:1)*0.8;
+    h.ends.forEach(function(en){en.forEach(function(a){if(!a||a.px==null)return;var ns=scoreAt(F,a.px,a.py,ar);a.s=ns.s;a.x=ns.x})})})}
 function rl(S){var R=ROUNDS.filter(function(r){return r.id===S.round})[0];if(R&&R.id!=='free')return t(R.l);return t(S.roundLabel||'自由設定')}
 function rlShort(S){return rl(S).replace(/[（(].*?[）)]/,'').trim()}
 function scoreAt(f,dx,dy,ar){
@@ -148,7 +156,7 @@ function makeScore(o){
   var R=ROUNDS.filter(function(r){return r.id===o.round})[0]||ROUNDS[0],per=Math.max(1,Math.min(30,Math.round(+o.per)||R.per)),hs=[];
   if(o.round==='free'){var n=Math.max(1,+o.free.arrows||36),cnt=Math.max(1,Math.min(6,+o.free.halves||1));
     for(var i=0;i<cnt;i++)hs.push({d:o.free.dist||'',f:o.face||'122',n:n})}
-  else hs=R.h.map(function(h){return {d:h[0],f:o.face||h[1],n:h[2]}});
+  else hs=R.h.map(function(h){return {d:h[0],f:o.face||faceFor(h[1],o.bow,h[0]),n:h[2]}});
   var halves=hs.map(function(h){var ne=Math.max(1,Math.ceil(h.n/per)),ends=[];for(var e=0;e<ne;e++)ends.push(new Array(Math.min(per,h.n-e*per)).fill(null));return {d:h.d,f:h.f,ends:ends}});
   return {id:uid(),type:'score',created:Date.now(),name:o.name,date:o.date,place:o.place,bow:o.bow,round:o.round,
     per:per,halves:halves,cur:{h:0,e:0,a:0},memo:'',weather:'',arrowMm:DB.set.arrowMm,gear:lastGear(),goal:0}}
@@ -338,7 +346,7 @@ document.addEventListener('input',function(e){var x=e.target;
   if(x.dataset&&('cc' in x.dataset)){DB.set.theme='custom';DB.set.customColor=x.value;save();applyTheme();return}
   if(x.dataset&&x.dataset.arrc&&ui.anaSelA){ui.anaSelA.c=x.value;save();return}
   if(x.dataset&&x.dataset.gear){var S0=curS();if(S0){S0.gear=S0.gear||{};S0.gear[x.dataset.gear]=x.value;ui.info=true;save()}}
-  if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;save();if(x.dataset.bind==='purpose')render();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
+  if(x.dataset&&x.dataset.bind){var S=curS();if(S){S[x.dataset.bind]=x.value;ui.info=true;if(x.dataset.bind==='bow'&&S.type==='score'){applyBow(S);ui.tgView=null}save();if(x.dataset.bind==='purpose'||x.dataset.bind==='bow')render();$('#sub').textContent=(S.name||t('名前なし'))+' ・ '+(S.type==='match'?t('対戦'):rl(S))+' ・ '+S.date}}
   if(x.dataset&&x.dataset.set&&x.dataset.set!=='lang'){var k=x.dataset.set;DB.set[k]=(x.type==='checkbox')?x.checked:(x.type==='number'?(+x.value||DB.set[k]):x.value);save();if(k==='wake')wake();if(k==='colorScore')render()}});
 document.addEventListener('change',function(e){var x=e.target;if(x.dataset&&('cc' in x.dataset)){render();return}if(x.dataset&&x.dataset.set==='lang'){DB.set.lang=x.value;LANG=pickLang(x.value);save();render()}});
 document.addEventListener('toggle',function(e){if(e.target.id==='info')ui.info=e.target.open},true);
