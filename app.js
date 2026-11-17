@@ -32,15 +32,15 @@ var LAY={v:[[0,-22],[0,0],[0,22]],t:[[0,-12.7],[-11,6.4],[11,6.4]]};
 var ROUNDS=[
  {id:'70',l:'70mラウンド（72射）リカーブ',per:6,h:[['70m','122',36],['70m','122',36]]},
  {id:'60',l:'60mラウンド（72射）U18・50+・高校生',per:6,h:[['60m','122',36],['60m','122',36]]},
- {id:'50bb',l:'ベアボウ 50mラウンド（72射）',per:6,h:[['50m','122',36],['50m','122',36]]},
- {id:'50c',l:'コンパウンド 50mラウンド（72射）80cm',per:6,h:[['50m','80',36],['50m','80',36]]},
- {id:'50c6',l:'コンパウンド 50mラウンド（72射）80cm6リング',per:6,h:[['50m','80-6',36],['50m','80-6',36]]},
- {id:'5030',l:'50m・30mラウンド（各36射）80cm',per:6,h:[['50m','80',36],['30m','80',36]]},
- {id:'40u15',l:'リカーブU15 40m（72射）',per:6,h:[['40m','122',36],['40m','122',36]]},
- {id:'30jh',l:'リカーブ中学生 30m（72射）80cm',per:6,h:[['30m','80',36],['30m','80',36]]},
- {id:'18es',l:'リカーブ小学生 18m（72射）80cm',per:6,h:[['18m','80',36],['18m','80',36]]},
- {id:'40cu15',l:'コンパウンドU15 40m（72射）80cm',per:6,h:[['40m','80',36],['40m','80',36]]},
- {id:'30bbu15',l:'ベアボウU15 30m（72射）',per:6,h:[['30m','122',36],['30m','122',36]]},
+ {id:'50bb',b:['barebow'],l:'ベアボウ 50mラウンド（72射）',per:6,h:[['50m','122',36],['50m','122',36]]},
+ {id:'50c',b:['compound'],l:'コンパウンド 50mラウンド（72射）80cm',per:6,h:[['50m','80',36],['50m','80',36]]},
+ {id:'50c6',b:['compound'],l:'コンパウンド 50mラウンド（72射）80cm6リング',per:6,h:[['50m','80-6',36],['50m','80-6',36]]},
+ {id:'5030',b:['recurve'],l:'50m・30mラウンド（各36射）80cm',per:6,h:[['50m','80',36],['30m','80',36]]},
+ {id:'40u15',b:['recurve'],l:'リカーブU15 40m（72射）',per:6,h:[['40m','122',36],['40m','122',36]]},
+ {id:'30jh',b:['recurve'],l:'リカーブ中学生 30m（72射）80cm',per:6,h:[['30m','80',36],['30m','80',36]]},
+ {id:'18es',b:['recurve'],l:'リカーブ小学生 18m（72射）80cm',per:6,h:[['18m','80',36],['18m','80',36]]},
+ {id:'40cu15',b:['compound'],l:'コンパウンドU15 40m（72射）80cm',per:6,h:[['40m','80',36],['40m','80',36]]},
+ {id:'30bbu15',b:['barebow'],l:'ベアボウU15 30m（72射）',per:6,h:[['30m','122',36],['30m','122',36]]},
  {id:'18in',l:'インドア 18m（60射）40cm',per:3,h:[['18m','40',30],['18m','40',30]]},
  {id:'18int',l:'インドア 18m（60射）40cm縦三つ目',per:3,h:[['18m','40t',30],['18m','40t',30]]},
  {id:'18tri',l:'インドア 18m（60射）40cm三角三つ目',per:3,h:[['18m','40tr',30],['18m','40tr',30]]},
@@ -50,9 +50,12 @@ var ROUNDS=[
  {id:'free',l:'自由設定（練習・その他）',per:6,h:[['','122',36]]}
 ];
 var RGROUPS=[
- {id:'g70',l:'70m',r:['70']},{id:'g60',l:'60m',r:['60']},{id:'g50',l:'50m',r:['50bb','50c','50c6','5030']},
+ {id:'g70',l:'70m',r:['70']},{id:'g60',l:'60m',r:['60']},{id:'g50',l:'50m',r:['50bb','50c6','50c','5030']},
  {id:'gjr',l:'ジュニア',r:['40u15','30jh','18es','40cu15','30bbu15']},{id:'gin',l:'インドア',r:['18in','18int','18tri','25in']},
  {id:'gwa',l:'WA 1440',r:['1440m','1440w']},{id:'gfree',l:'自由設定',r:['free']}];
+// rounds offered per bow (a round without .b is open to every bow; 'other' sees all)
+function roundsFor(bow){return ROUNDS.filter(function(r){return !r.b||!BOWS_ONLY[bow]||r.b.indexOf(bow)>=0}).map(function(r){return r.id})}
+var BOWS_ONLY={recurve:1,compound:1,barebow:1};
 function rgroupOf(id){return RGROUPS.filter(function(g){return g.r.indexOf(id)>=0})[0]||RGROUPS[0]}
 // match play (JAF rules art.208 / World Archery)
 var MKINDS={
@@ -119,7 +122,7 @@ function maxArrows(S){return S.halves.reduce(function(t,h){return t+h.ends.reduc
 function faceOf(h){return FACES[h.f]||FACES['122']}
 // compound indoor: only the small inner ring is 10 (the rest of the yellow ring is 9) -> use the compound variant of the face
 var TOCOMP={'60':'60c','40':'40c','40t':'40tc','40tr':'40trc'},FROMCOMP={'60c':'60','40c':'40','40tc':'40t','40trc':'40tr','80-6':'80'};
-function faceFor(f,bow,d){if(bow==='compound'){if(f==='80'&&/^50m?$/i.test(String(d||'').trim()))return '80-6';return TOCOMP[f]||f}return FROMCOMP[f]||f}
+function faceFor(f,bow,d){if(bow==='compound')return TOCOMP[f]||f;return FROMCOMP[f]||f}
 // switch an existing record to the faces of the chosen bow and score again the arrows that have a position
 function applyBow(S){
   S.halves.forEach(function(h){var nf=faceFor(h.f,S.bow,h.d);if(nf===h.f)return;h.f=nf;var F=FACES[nf],R=(11-F.min)*F.rw,ar=R*0.034*(F.spots>1?1.3:1)*0.8;
@@ -500,15 +503,18 @@ function openNew(keep){var d=$('#dlg'),k=ui.dlgKind,o=ui.dlgVals||{};
   var h='<h2>'+t('新しい記録')+'</h2><div class="chips"><button class="'+(k==='score'?'on':'')+'" data-act="dlgKind" data-v="score">'+t('通常の記録（ラウンド）')+'</button><button class="'+(k==='match'?'on':'')+'" data-act="dlgKind" data-v="match">'+t('対戦（マッチ）')+'</button></div>'
    +'<div class="grid2"><div><label>'+t('氏名')+'</label><input id="d_name" value="'+esc(o.name!=null?o.name:DB.set.name)+'"></div><div><label>'+t('日付')+'</label><input id="d_date" type="date" value="'+esc(o.date||today())+'"></div></div>'
    +'<div class="grid2"><div><label>'+t('練習か試合か')+'</label>'+purSel('id="d_purpose"',o.purpose||'practice')+'</div><div><label>'+t('大会名・場所')+'</label><input id="d_place" value="'+esc(o.place||'')+'"></div></div>';
-  if(k==='score'){var rd=o.round||'70',R=ROUNDS.filter(function(r){return r.id===rd})[0]||ROUNDS[0],perSel=o.per&&o.per!=='m'?+o.per:R.per,manual=(o.per==='m')||([3,6,9,12].indexOf(perSel)<0);
-    var G=rgroupOf(rd);
-    h+='<label>'+t('ラウンド')+'</label><div class="chips">'+RGROUPS.map(function(g){return '<button class="'+(g.id===G.id?'on':'')+'" data-act="rgrp" data-v="'+g.r[0]+'">'+t(g.l)+'</button>'}).join('')+'</div>'
-     +(G.r.length>1?'<select id="d_round" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+G.r.map(function(id){var r=ROUNDS.filter(function(x){return x.id===id})[0];return '<option value="'+r.id+'"'+(r.id===rd?' selected':'')+'>'+esc(t(r.l))+'</option>'}).join('')+'</select>'
+  if(k==='score'){var bw=o.bow||DB.set.bow,vis=roundsFor(bw),rd=o.round||'70';
+    if(vis.indexOf(rd)<0){var g0=rgroupOf(rd).r.filter(function(i){return vis.indexOf(i)>=0})[0];rd=g0||vis[0];o.per=undefined}
+    var R=ROUNDS.filter(function(r){return r.id===rd})[0]||ROUNDS[0],perSel=o.per&&o.per!=='m'?+o.per:R.per,manual=(o.per==='m')||([3,6,9,12].indexOf(perSel)<0);
+    var G=rgroupOf(rd),GR=G.r.filter(function(i){return vis.indexOf(i)>=0});
+    h+='<label>'+t('弓種')+'</label><select id="d_bow" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+(bw===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'
+     +'<label>'+t('ラウンド')+'</label><div class="chips">'+RGROUPS.filter(function(g){return g.r.some(function(i){return vis.indexOf(i)>=0})}).map(function(g){return '<button class="'+(g.id===G.id?'on':'')+'" data-act="rgrp" data-v="'+g.r.filter(function(i){return vis.indexOf(i)>=0})[0]+'">'+t(g.l)+'</button>'}).join('')+'</div>'
+     +(GR.length>1?'<select id="d_round" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+GR.map(function(id){var r=ROUNDS.filter(function(x){return x.id===id})[0];return '<option value="'+r.id+'"'+(r.id===rd?' selected':'')+'>'+esc(t(r.l))+'</option>'}).join('')+'</select>'
        :'<input type="hidden" id="d_round" value="'+rd+'"><p class="note">'+esc(t(R.l))+'</p>')
      +'<div class="grid2">'+(rd==='free'?'<div><label>'+t('標的面（ラウンドの既定から変更可）')+'</label><select id="d_face"><option value="">'+t('ラウンドの既定')+'</option>'+Object.keys(FACES).map(function(f){return '<option value="'+f+'"'+(o.face===f?' selected':'')+'>'+esc(t(FACES[f].l))+'</option>'}).join('')+'</select></div>':'')
      +'<div><label>'+t('1エンドの射数')+'</label><select id="d_per" onchange="this.dispatchEvent(new CustomEvent(\'rr\',{bubbles:true}))">'+[3,6,9,12].map(function(n){return '<option value="'+n+'"'+(!manual&&perSel==n?' selected':'')+'>'+t('{0}射',n)+'</option>'}).join('')+'<option value="m"'+(manual?' selected':'')+'>'+t('手入力')+'</option></select>'+(manual?'<input id="d_perm" type="number" min="1" max="30" style="margin-top:4px" placeholder="'+t('射数（1〜30）')+'" value="'+esc(o.perm||'')+'">':'')+'</div></div>'
      +(rd==='free'?'<div class="grid2"><div><label>'+t('距離（例 30m）')+'</label><input id="d_dist" value="'+esc(o.dist||'')+'"></div><div><label>'+t('矢数 / 1回分')+'</label><input id="d_arrows" type="number" value="'+(o.arrows||36)+'"></div><div><label>'+t('回数（距離の数）')+'</label><input id="d_halves" type="number" min="1" max="6" value="'+(o.halves||1)+'"></div></div>':'')
-     +'<label>'+t('弓種')+'</label><select id="d_bow">'+Object.keys(BOWS).map(function(b){return '<option value="'+b+'"'+((o.bow||DB.set.bow)===b?' selected':'')+'>'+t(BOWS[b])+'</option>'}).join('')+'</select>'}
+     +''}
   else{var mu=o.unit||'ind',ms=o.sys||'set';
     h+='<div class="grid2"><div><label>'+t('形式')+'</label><select id="d_unit">'+Object.keys(MUNIT).map(function(k){return '<option value="'+k+'"'+(mu===k?' selected':'')+'>'+t(MUNIT[k])+'</option>'}).join('')+'</select></div>'
      +'<div><label>'+t('方式')+'</label><select id="d_sys">'+Object.keys(MSYS).map(function(k){return '<option value="'+k+'"'+(ms===k?' selected':'')+'>'+t(MSYS[k])+'</option>'}).join('')+'</select></div></div>'
