@@ -183,8 +183,8 @@ function render(){
 
 /* ================= 的の描画 ================= */
 function faceSVG(f,cx,cy){var n=11-f.min,rw=f.rw,s='';
-  for(var k=n;k>=1;k--){var sc=11-k;s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(k*rw)+'" fill="'+ZC[sc]+'" stroke="'+((sc===3||sc===4)?'#888':'#222')+'" stroke-width="'+(rw*0.035)+'"/>'}
-  if(f.comp||!f.indoor)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(rw/2)+'" fill="none" stroke="#222" stroke-width="'+(rw*0.03)+'"/>';
+  for(var k=n;k>=1;k--){var sc=11-k;s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(k*rw)+'" fill="'+ZC[sc]+'" stroke="'+((f.comp&&sc===10)?'none':((sc===3||sc===4)?'#888':'#222'))+'" stroke-width="'+(rw*0.035)+'"/>'}
+  if(f.comp||!f.indoor)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(rw/2)+'" fill="none" stroke="#222" stroke-width="'+(rw*(f.comp?0.07:0.03))+'"/>';
   var c=rw*0.22;s+='<path d="M'+(cx-c)+' '+cy+'H'+(cx+c)+'M'+cx+' '+(cy-c)+'V'+(cy+c)+'" stroke="#222" stroke-width="'+(rw*0.03)+'"/>';return s}
 function vbOf(P,R,m){var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;P.forEach(function(p){x0=Math.min(x0,p[0]-R);x1=Math.max(x1,p[0]+R);y0=Math.min(y0,p[1]-R);y1=Math.max(y1,p[1]+R)});return [x0-m,y0-m,x1-x0+2*m,y1-y0+2*m]}
 function geom(h){var f=faceOf(h),R=(11-f.min)*f.rw,P=f.spots>1?LAY[f.lay||'v']:[[0,0]];
