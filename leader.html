@@ -59,6 +59,10 @@ function csvId(v){var m=/spreadsheets\/d\/e\/([A-Za-z0-9_\-]+)\/pub/.exec(v||'')
 function shId(v){var m=/spreadsheets\/d\/([A-Za-z0-9_\-]{30,60})/.exec(v||'');return m&&!/^2PACX/.test(m[1])?m[1]:null}
 function okSheet(v){return !!(csvId(v)||shId(v))}
 var TOTAL=4;
+S.mgr=S.mgr||'';
+function titleOf(){var n=(S.name||'').trim();return (n?n+' ':'')+'チームスコア'}
+function nameBox(){var n=(S.name||'').trim();return '<label style="font-weight:bold">先に、チームの名前を入れてください</label><input id="nameIn1" maxlength="40" placeholder="例：京都女子" value="'+esc(S.name)+'"><div id="titleOut">'+titleHtml()+'</div>'}
+function titleHtml(){var n=(S.name||'').trim();if(!n)return '<p class="note">名前を入れると、フォームにつける名前ができます。</p>';return '<div class="hint">フォームにつける名前：<br><b>'+esc(titleOf())+'</b></div><button class="big" data-copy="'+esc(titleOf())+'">📋 この名前をコピー</button>'}
 function sortIn(tx,pref){tx=(tx||'').trim();if(!tx)return;if(formId(tx))S.form=tx;else if(okSheet(tx))S.csv=tx;else S[pref]=tx}
 function box(k,label,ex,val,ok,bad){
  var h='<div class="hint" style="margin-top:14px"><b>'+label+'</b><br>'+ex+'</div><button class="big" data-paste="'+k+'">📋 コピーしたリンクを貼る</button><textarea id="'+k+'In" rows="2" placeholder="ここに貼ってもかまいません">'+esc(val)+'</textarea>';
@@ -66,7 +70,7 @@ function box(k,label,ex,val,ok,bad){
  return h}
 var steps=[
  function(){return '<p class="step">はじめに</p><h2>用意するもの</h2><ul style="padding-left:1.2em;margin:6px 0"><li>Googleアカウント（Gmailなど）</li><li>スマホかパソコン（見やすいほうでOK）</li><li>10分ほどの時間</li></ul><div class="hint">🔒 記録は、<b>あなたのGoogleのスプレッドシート</b>にだけ入ります。アプリの作者には届きません。他のチームにも見えません。</div><div class="hint">💡 このページは<b>開いたままにして</b>、Googleは<b>別の画面（タブ）</b>で開きます。パソコンなら、2つの画面を並べると、迷いません。スマホなら、ホーム画面の切り替えで行き来します。</div><button class="big pri" data-go="1">はじめる</button>'},
- function(){return '<p class="step">手順 1 / 3</p><h2>Googleで準備する（まとめて）</h2><p>先に、下のボタンでGoogleを<b>別の画面</b>で開きます。このページは閉じないでください。</p><button class="big pri" data-open="'+TPL_COPY+'">① Googleでフォームをコピーする</button><div class="hint">開いた画面で、青い <span class="mark">コピーを作成</span> を押します。そのあとは、下の ② から順番に進めてください。</div>'
+ function(){return '<p class="step">手順 1 / 3</p><h2>Googleで準備する（まとめて）</h2><p>このページは閉じないでください。Googleは、<b>別の画面</b>で開きます。</p>'+nameBox()+'<p style="margin-top:14px">名前をコピーしたら、下のボタンでGoogleを開きます。</p><button class="big pri" data-open="'+TPL_COPY+'">① Googleでフォームをコピーする</button><div class="hint">開いた画面の <span class="mark">名前</span> の欄に、<b>コピーした名前を貼って</b>、青い <span class="mark">コピーを作成</span> を押します。そのあとは、下の ② から順番に進めてください。</div>'
   +'<h3>② フォームを公開する</h3><p>コピーされたフォーム（<b>紫色</b>の画面）の、右上の <span class="mark">公開</span> を押します。出てきた画面でも、もう一度 <span class="mark">公開</span> を押します。</p><div class="hint">👉 すると、<b>「回答者へのリンクをコピー」</b>という小さい画面が出ます。そこの <span class="mark">コピー</span> を押して、メモ帳かLINEの「自分だけのトーク」に貼っておいてください。<b>これが⑤のフォームのリンクです。</b></div>'
   +'<h3>③ 回答をスプレッドシートに集める</h3><p>フォームの上の <span class="mark">回答</span> → <span class="mark">スプレッドシートにリンク</span> → <span class="mark">作成</span> を押します。<b>緑色</b>のスプレッドシートが開きます。</p>'
   +'<h3>④ スプレッドシートを共有する</h3><p>開いた<b>緑色</b>の画面で：</p><ol><li>右上の、鍵のマークがついた青い <span class="mark">🔒 共有</span> ボタンを押す（スマホは、人のマークです）</li><li><span class="mark">一般的なアクセス</span> を、<span class="mark">リンクを知っている全員</span> にする</li><li>右の役割は <span class="mark">閲覧者</span> のままにする（<b>編集者にしない</b>）</li><li><span class="mark">リンクをコピー</span> を押して、メモ帳かLINEの「自分だけのトーク」に貼っておく</li></ol>'
@@ -79,10 +83,10 @@ var steps=[
   h+=box('form','② フォームのリンク','<b>forms</b> で始まる（⑤で出たもの）',S.form,!!f,'これは違うリンクです。⑤の鎖のマークで出た、<b>forms</b> で始まるリンクを貼ってください。');
   return h+nav(2,!!(f&&c))},
  function(){
-  return '<p class="step">手順 3 / 3</p><h2>チームの招待リンクを作る</h2><p>チームの名前を入れてください。</p><input id="nameIn" maxlength="40" placeholder="例：○○大学アーチェリー部" value="'+esc(S.name)+'"><div id="inviteOut">'+invite()+'</div><div class="row"><button class="big" data-go="2">← 戻る</button></div>'},
+  return '<p class="step">手順 3 / 3</p><h2>チームの招待リンクを作る</h2><p>チームの名前を入れてください。</p><input id="nameIn" maxlength="40" placeholder="例：○○大学アーチェリー部" value="'+esc(S.name)+'"><p style="margin-bottom:0"><b>スコア管理人（あなた）の名前</b></p><p class="note" style="margin-top:0">あとで「誰が管理人か」が分かるように、アプリに表示されます。</p><input id="mgrIn" maxlength="20" placeholder="例：山田" value="'+esc(S.mgr)+'"><div id="inviteOut">'+invite()+'</div><div class="row"><button class="big" data-go="2">← 戻る</button></div>'},
 ];
 function invite(){var f=formId(S.form),c=okSheet(S.csv),nm=(S.name||'').trim();
-  if(f&&c&&nm){var link=APP+'#team='+b64e(csvId(S.csv)?{f:f,c:csvId(S.csv),n:nm}:{f:f,s:shId(S.csv),n:nm}),msg='Archery Score のチーム「'+nm+'」に入るリンクです。開いて「入る」を押してください。\n'+link;
+  if(f&&c&&nm){var link=APP+'#team='+b64e(Object.assign(csvId(S.csv)?{f:f,c:csvId(S.csv),n:nm}:{f:f,s:shId(S.csv),n:nm},(S.mgr||'').trim()?{m:S.mgr.trim().slice(0,20)}:{})),msg='Archery Score のチーム「'+nm+'」に入るリンクです。開いて「入る」を押してください。\n'+link;
   return '<p class="ok">🎉 できました！ このリンクを選手に送ります。</p><textarea id="linkOut" rows="4" readonly>'+esc(link)+'</textarea><div class="hint"><b>まず、代表のあなた自身も、チームに入ります。</b>下のボタンを押して、「入る」を押してください。そのあと、アプリの「設定」→「チームで共有」で、名前を入れて「このチームに送る」をONにします。</div><a class="big pri" href="'+esc(link)+'">🙋 自分もこのチームに入る</a><button class="big pri" data-copy="'+esc(link)+'">📋 リンクをコピー</button><a class="big pri" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?'+encodeURIComponent(msg)+'">💬 LINEで送る</a><button class="big" data-share="'+esc(link)+'|'+esc(nm)+'">📤 ほかのアプリで送る</button><div class="hint"><b>選手には、こう伝えてください：</b><br>① リンクを開く → 「入る」を押す<br>② アプリの「設定」→「チームで共有」で、名前を入れて「このチームに送る」をON</div><p class="note">⚠ このリンクは、チームの人だけに送ってください。リンクを知っている人は、記録を送ったり見たりできます。</p><p class="note"><a href="leader-change.html">代表が交代するときは、こちら</a></p>'}
   return '<p class="note">名前を入れると、招待リンクができます。</p>'}
 function nav(i,ok){return '<div class="row"><button class="big" data-go="'+(i-1)+'">← 戻る</button><button class="big pri" '+(ok?'':'disabled')+' data-go="'+(i+1)+'">できた → 次へ</button></div>'}
@@ -107,6 +111,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-go],
 document.addEventListener('input',function(e){var x=e.target;
   if(x.id==='csvIn'){sortIn(x.value,'csv');save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
   else if(x.id==='formIn'){sortIn(x.value,'form');save();clearTimeout(window.__t);window.__t=setTimeout(render,500)}
+  else if(x.id==='mgrIn'){S.mgr=x.value;save();var oo=document.getElementById('inviteOut');if(oo)oo.innerHTML=invite()}
+  else if(x.id==='nameIn1'){S.name=x.value;save();var o1=document.getElementById('titleOut');if(o1)o1.innerHTML=titleHtml()}
   else if(x.id==='nameIn'){S.name=x.value;save();var o=document.getElementById('inviteOut');if(o)o.innerHTML=invite()}});
 render();
 })();

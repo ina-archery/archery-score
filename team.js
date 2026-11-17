@@ -28,7 +28,7 @@ var COPYRIGHT='© 2026 M.Inamoto';
  '最近の記録':'Recent records','自己ベスト':'Personal best','件':' records',
  'お知らせ':'Notice','閉じる':'Close','開く':'Open',
  '無断での複製・再配布・改変を禁じます。個人での利用は自由です。':'Copying, redistribution and modification without permission are prohibited. Personal use is free.',
- 'チームから抜けますか？':'Leave this team?','このチームから抜ける':'Leave this team','同じ名前のチームに、すでに入っています。新しいリンクに入れ替えますか？':'You are already in a team with this name. Replace it with the new link?','入れ替える':'Replace','入れ替えました':'Replaced','代表を交代するとき':'When the leader changes','このチームの招待リンクを出す':'Show the invitation link of this team','このリンクを、チームに入れたい人に送ってください。':'Send this link to people you want to join the team.','Archery Score のチーム「':'Archery Score team "','」に入るリンクです。開いて「入る」を押してください。':'" - open this link and tap Join.','チームを切り替える':'Switch team','ほかのチームにも入るときは、そのチームの招待リンクを開いてください。このチームはそのまま残ります。':'To join another team, open the invitation link for that team. This team stays as it is.',
+ 'チームから抜けますか？':'Leave this team?','このチームから抜ける':'Leave this team','スコア管理人':'Score manager','（未設定）':'(not set)','スコア管理人の名前':'Score manager name','例：山田':'e.g. Yamada','管理人が変わったときは、新しい管理人の名前を入れて、新しいリンクをチームに送ってください。リンクを開いた人に、名前が更新されます。':'When the manager changes, enter the new name and send the new link to the team. Anyone who opens it gets the name updated.','同じ名前のチームに、すでに入っています。新しいリンクに入れ替えますか？':'You are already in a team with this name. Replace it with the new link?','入れ替える':'Replace','入れ替えました':'Replaced','代表を交代するとき':'When the leader changes','このチームの招待リンクを出す':'Show the invitation link of this team','このリンクを、チームに入れたい人に送ってください。':'Send this link to people you want to join the team.','Archery Score のチーム「':'Archery Score team "','」に入るリンクです。開いて「入る」を押してください。':'" - open this link and tap Join.','チームを切り替える':'Switch team','ほかのチームにも入るときは、そのチームの招待リンクを開いてください。このチームはそのまま残ります。':'To join another team, open the invitation link for that team. This team stays as it is.',
  '使い方（代表と選手）':'How to use (leader and players)',
  '選手：チームに入る':'Players: join a team',
  '代表から届いたリンクを開きます。':'Open the link sent by your team leader.',
@@ -104,7 +104,7 @@ function teams(){return st().list}
 function team(){var s=st(),i;for(i=0;i<s.list.length;i++)if(s.list[i].id===s.cur)return s.list[i];return s.list[0]||null}
 function saveTeam(T){var s=st(),i;for(i=0;i<s.list.length;i++)if(s.list[i].id===T.id){s.list[i]=T;break}saveSt(s)}
 function addTeam(x){var s=st(),i,same=function(a){return a.f===x.f&&(a.s||a.c||a.u)===(x.s||x.c||x.u)};
-  for(i=0;i<s.list.length;i++)if(same(s.list[i])){x.id=s.list[i].id;x.on=s.list[i].on;x.name=s.list[i].name;s.list[i]=x;s.cur=x.id;saveSt(s);return}
+  for(i=0;i<s.list.length;i++)if(same(s.list[i])){x.id=s.list[i].id;x.on=s.list[i].on;x.name=s.list[i].name;x.m=x.m||s.list[i].m||'';s.list[i]=x;s.cur=x.id;saveSt(s);return}
   x.id='t'+Date.now().toString(36)+Math.floor(Math.random()*1e4);s.list.push(x);s.cur=x.id;saveSt(s)}
 function removeCur(){var s=st(),T=team();if(!T)return;s.list=s.list.filter(function(a){return a.id!==T.id});s.cur=s.list[0]?s.list[0].id:'';saveSt(s)}
 function selectTeam(id){var s=st();s.cur=id;saveSt(s);board=null}
@@ -120,10 +120,10 @@ function readJoin(){
   if(!isForm&&!isOld){A.flash(t('招待リンクが正しくありません'));return}
   var dup=null;if(isForm)teams().forEach(function(a){if(String(a.n).trim()===String(o.n).trim()&&a.f&&!(a.f===o.f&&(a.s||a.c)===(o.s||o.c)))dup=a});
   if(dup){A.uiDlg({msg:t('同じ名前のチームに、すでに入っています。新しいリンクに入れ替えますか？')+'\n'+o.n,okLabel:t('入れ替える'),onOk:function(){
-    var s=st(),i;for(i=0;i<s.list.length;i++)if(s.list[i].id===dup.id){s.list[i]=Object.assign({},dup,{f:o.f,c:(okCsvId(o.c)?o.c:undefined),s:(okSheetId(o.s)?o.s:undefined),n:String(o.n).slice(0,40)});s.cur=dup.id;break}
+    var s=st(),i;for(i=0;i<s.list.length;i++)if(s.list[i].id===dup.id){s.list[i]=Object.assign({},dup,{f:o.f,c:(okCsvId(o.c)?o.c:undefined),s:(okSheetId(o.s)?o.s:undefined),n:String(o.n).slice(0,40),m:(typeof o.m==='string'&&o.m.trim()?o.m.trim().slice(0,20):(dup.m||''))});s.cur=dup.id;break}
     saveSt(s);board=null;A.flash(t('入れ替えました'));A.render()}});return}
-  A.uiDlg({msg:t('このチームに入りますか？')+'\n'+o.n,okLabel:t('入る'),onOk:function(){
-    var base={n:String(o.n).slice(0,40),on:false,name:(A.DB().set.name||'')};
+  A.uiDlg({msg:t('このチームに入りますか？')+'\n'+o.n+((typeof o.m==='string'&&o.m.trim())?'\n'+t('スコア管理人')+'：'+o.m.trim().slice(0,20):''),okLabel:t('入る'),onOk:function(){
+    var base={n:String(o.n).slice(0,40),on:false,name:(A.DB().set.name||''),m:(typeof o.m==='string'?o.m.trim().slice(0,20):'')};
     addTeam(isForm?Object.assign(base,{f:o.f,c:(okCsvId(o.c)?o.c:undefined),s:(okSheetId(o.s)?o.s:undefined)}):Object.assign(base,{u:o.u,k:o.k}));board=null;
     A.flash(t('入る'));A.render()}});
 }
@@ -228,11 +228,12 @@ function copyLink(){
 /* ---------- show the invitation link of a team already joined ---------- */
 var showInv='';
 function inviteLink(T){
-  var o=T.f?(T.s?{f:T.f,s:T.s,n:T.n}:{f:T.f,c:T.c,n:T.n}):{u:T.u,k:T.k,n:T.n};
+  var o=T.f?(T.s?{f:T.f,s:T.s,n:T.n}:{f:T.f,c:T.c,n:T.n}):{u:T.u,k:T.k,n:T.n};if(T.m)o.m=T.m;
   return location.origin+location.pathname+'#team='+b64e(o)}
 function inviteHtml(T){
   var link=inviteLink(T),msg=t('Archery Score のチーム「')+T.n+t('」に入るリンクです。開いて「入る」を押してください。')+'\n'+link;
   return '<div class="card" style="margin:8px 0;padding:10px"><p class="note"><b>'+esc(T.n)+'</b>：'+t('このリンクを、チームに入れたい人に送ってください。')+'</p>'
+   +'<label>'+t('スコア管理人の名前')+'</label><input data-team="mgr" maxlength="20" value="'+esc(T.m||'')+'" placeholder="'+t('例：山田')+'"><p class="note">'+t('管理人が変わったときは、新しい管理人の名前を入れて、新しいリンクをチームに送ってください。リンクを開いた人に、名前が更新されます。')+'</p>'
    +'<textarea id="tm_invlink" rows="3" readonly style="width:100%">'+esc(link)+'</textarea>'
    +'<div class="row"><button class="pri" data-team-act="copyInv" style="min-height:48px">'+t('招待リンクをコピー')+'</button>'
    +'<a class="btn" target="_blank" rel="noopener" style="min-height:48px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px" href="https://line.me/R/msg/text/?'+encodeURIComponent(msg)+'">💬 LINE</a></div>'
@@ -253,7 +254,7 @@ function cards(){
   else{
     var L=teams();
     if(L.length>1){h+='<p class="note">'+t('チームを切り替える')+'</p><div class="row" style="flex-wrap:wrap;gap:6px">'+L.map(function(a){return '<button data-team-act="sel" data-id="'+esc(a.id)+'" class="'+(a.id===T.id?'pri':'')+'" style="min-height:44px">'+esc(a.n)+(a.on?' ✓':'')+'</button>'}).join('')+'</div>'}
-    h+='<p class="note">'+t('チーム名')+'：<b>'+esc(T.n)+'</b></p>'
+    h+='<p class="note">'+t('チーム名')+'：<b>'+esc(T.n)+'</b><br>'+t('スコア管理人')+'：<b>'+(T.m?esc(T.m):t('（未設定）'))+'</b></p>'
      +'<label>'+t('表示する名前')+'</label><input data-team="name" value="'+esc(T.name||'')+'" maxlength="30">'
      +'<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" style="width:auto;margin-top:4px" data-team="on" '+(T.on?'checked':'')+'><span>'+t('このチームに送る')+'</span></label>'
      +'<p class="note">'+t('ONにすると、記録を保存するたびに、次の内容を代表のスプレッドシートに送ります：名前・日付・ラウンド・大会名・場所・順位・各回の点数・合計・10の数・Xの数。的のどこに当たったかは送りません。')+'</p>'
@@ -283,7 +284,9 @@ document.addEventListener('change',function(e){var x=e.target;if(!x.dataset||!x.
     if(x.checked&&!(T.name||'').trim()){x.checked=false;A.flash(t('名前を入れてください'));return}
     T.on=!!x.checked;saveTeam(T)}});
 document.addEventListener('toggle',function(e){if(e.target&&e.target.hasAttribute&&e.target.hasAttribute('data-guide'))guideOpen=e.target.open},true);
-document.addEventListener('input',function(e){var x=e.target;if(!x.dataset||x.dataset.team!=='name')return;var T=team();if(!T)return;T.name=x.value;saveTeam(T)});
+document.addEventListener('input',function(e){var x=e.target;if(!x.dataset)return;
+  if(x.dataset.team==='mgr'){var T1=team();if(!T1)return;T1.m=x.value.trim().slice(0,20);saveTeam(T1);var ta=$('#tm_invlink');if(ta)ta.value=inviteLink(T1);return}
+  if(x.dataset.team!=='name')return;var T=team();if(!T)return;T.name=x.value;saveTeam(T)});
 
 /* ---------- announcements (announce.json on the same site; never cached) ---------- */
 function announce(){
