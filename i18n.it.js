@@ -4,6 +4,7 @@ window.I18N.it={
 '10+Xの数':'10+X',
 '10の数':'N. di 10',
 '1エンドの射数':'Frecce per volée',
+'的紙の選択':'Scegli il facciale',
 '1セット（1エンド）の射数':'Frecce per set (volée)',
 '1本戻す':'Annulla ultima',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'Facciale a 6 anelli: sotto il 5 è mancata. Tre spot: sotto il 6 è mancata. Fuori dal facciale: M',

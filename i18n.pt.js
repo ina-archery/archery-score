@@ -4,6 +4,7 @@ window.I18N.pt={
 '10+Xの数':'10+X',
 '10の数':'Nº de 10',
 '1エンドの射数':'Flechas por série',
+'的紙の選択':'Escolher a face do alvo',
 '1セット（1エンド）の射数':'Flechas por set (série)',
 '1本戻す':'Desfazer',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'Alvo de 6 anéis: abaixo de 5 é erro. Alvo triplo: abaixo de 6 é erro. Fora do alvo: M',

@@ -8,6 +8,7 @@ window.I18N.en={
 '10+Xの数':'10+X',
 '10の数':'10s',
 '1エンドの射数':'Arrows per end',
+'的紙の選択':'Target face',
 '1セット（1エンド）の射数':'Arrows per set (end)',
 '1本戻す':'Undo',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'6-ring face: below 5 is a miss. 3-spot: below 6 is a miss. Outside the face is M',

@@ -4,6 +4,7 @@ window.I18N.de={
 '10+Xの数':'10+X',
 '10の数':'Anzahl 10',
 '1エンドの射数':'Pfeile pro Passe',
+'的紙の選択':'Scheibenauflage wählen',
 '1セット（1エンド）の射数':'Pfeile pro Satz (Passe)',
 '1本戻す':'Rückgängig',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'6-Ring-Auflage: unter 5 ist ein Fehlschuss. 3-Spot: unter 6 ist ein Fehlschuss. Außerhalb der Auflage: M',

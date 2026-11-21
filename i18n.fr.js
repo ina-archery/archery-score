@@ -4,6 +4,7 @@ window.I18N.fr={
 '10+Xの数':'10+X',
 '10の数':'Nb de 10',
 '1エンドの射数':'Flèches par volée',
+'的紙の選択':'Choisir le blason',
 '1セット（1エンド）の射数':'Flèches par set (volée)',
 '1本戻す':'Annuler',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'Blason 6 zones : en dessous de 5, c\'est manqué. Trispot : en dessous de 6, c\'est manqué. Hors blason : M',

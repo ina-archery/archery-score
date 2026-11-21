@@ -4,6 +4,7 @@ window.I18N.es={
 '10+Xの数':'10+X',
 '10の数':'N.º de 10',
 '1エンドの射数':'Flechas por tanda',
+'的紙の選択':'Elegir la cara del blanco',
 '1セット（1エンド）の射数':'Flechas por set (tanda)',
 '1本戻す':'Deshacer',
 '6リング標的面は5点未満、三つ目は6点未満、的の外はM':'Diana de 6 anillos: por debajo de 5 es fallo. Triple diana: por debajo de 6 es fallo. Fuera de la diana: M',
